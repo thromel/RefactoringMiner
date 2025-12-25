@@ -2092,6 +2092,12 @@ public abstract class AbstractCodeMapping implements LeafMappingProvider {
 			if(involvesMethodInvocation(replacement)) {
 				replacements.add(replacement);
 			}
+			// Check if fragment2 has method invocations that fragment1 doesn't have
+			// This handles cases where a method invocation was introduced
+			else if(!fragment2.getMethodInvocations().isEmpty() && fragment1.getMethodInvocations().isEmpty()) {
+				// A method invocation was introduced - this is relevant for Extract Method detection
+				replacements.add(replacement);
+			}
 		}
 		return replacements;
 	}

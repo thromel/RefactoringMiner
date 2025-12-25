@@ -1207,7 +1207,8 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 					VariableDeclaration declaration = statement.getVariableDeclarations().get(0);
 					AbstractExpression initializer = declaration.getInitializer();
 					if(initializer != null && (initializer.getMethodInvocations().size() > 0 || initializer.getCreations().size() > 0 || initializer.getTypeLiterals().size() > 0 ||
-							initializer.getStringLiterals().size() > 0 || initializer.getCastExpressions().size() > 0 || initializer.getLambdas().size() > 0 || initializer.getInstanceofExpressions().size() > 0 || (initializer.getNumberLiterals().size() > 0 && !isDefaultValue(initializer.getString(), LANG)))) {
+							initializer.getStringLiterals().size() > 0 || initializer.getCastExpressions().size() > 0 || initializer.getLambdas().size() > 0 || initializer.getInstanceofExpressions().size() > 0 || (initializer.getNumberLiterals().size() > 0 && !isDefaultValue(initializer.getString(), LANG)) ||
+							(initializer.getInfixExpressions().size() > 0 && initializer.getVariables().size() > 0))) {
 						for(AbstractCodeFragment nonMappedLeaf1 : nonMappedLeavesT1) {
 							boolean matchingVariableDeclaration = false;
 							List<VariableDeclaration> declarations1 = nonMappedLeaf1.getVariableDeclarations();
@@ -1287,7 +1288,8 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 					VariableDeclaration declaration = statement.getVariableDeclarations().get(0);
 					AbstractExpression initializer = declaration.getInitializer();
 					if(initializer != null && (initializer.getMethodInvocations().size() > 0 || initializer.getCreations().size() > 0 || initializer.getTypeLiterals().size() > 0 ||
-							initializer.getStringLiterals().size() > 0 || initializer.getCastExpressions().size() > 0 || initializer.getLambdas().size() > 0 || initializer.getInstanceofExpressions().size() > 0 || (initializer.getNumberLiterals().size() > 0 && !isDefaultValue(initializer.getString(), LANG)))) {
+							initializer.getStringLiterals().size() > 0 || initializer.getCastExpressions().size() > 0 || initializer.getLambdas().size() > 0 || initializer.getInstanceofExpressions().size() > 0 || (initializer.getNumberLiterals().size() > 0 && !isDefaultValue(initializer.getString(), LANG)) ||
+							(initializer.getInfixExpressions().size() > 0 && initializer.getVariables().size() > 0))) {
 						for(AbstractCodeFragment nonMappedLeaf2 : nonMappedLeavesT2) {
 							boolean matchingVariableDeclaration = false;
 							List<VariableDeclaration> declarations2 = nonMappedLeaf2.getVariableDeclarations();
@@ -5120,6 +5122,26 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 						if(!call1.equals(call2)) {
 							MethodInvocationReplacement r = new MethodInvocationReplacement(call1.actualString(), call2.actualString(), call1, call2, ReplacementType.METHOD_INVOCATION);
 							replacements.add(r);
+						}
+					}
+				}
+				else if(methodInvocations1.size() > methodInvocations2.size()) {
+					// Method invocation in V1 replaced with non-invocation expression in V2 (potential inline)
+					for(AbstractCall call1 : methodInvocations1) {
+						boolean foundMatchingCall = false;
+						for(AbstractCall call2 : methodInvocations2) {
+							if(call1.identicalName(call2)) {
+								foundMatchingCall = true;
+								break;
+							}
+						}
+						if(!foundMatchingCall) {
+							// This invocation was replaced with something else - use existing replacements
+							for(Replacement r : mapping.getReplacements()) {
+								if(r.getBefore().contains(call1.getName() + "(")) {
+									replacements.add(r);
+								}
+							}
 						}
 					}
 				}
