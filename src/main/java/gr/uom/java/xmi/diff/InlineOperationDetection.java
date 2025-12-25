@@ -86,7 +86,7 @@ public class InlineOperationDetection {
 		if(!mapper.getNonMappedLeavesT2().isEmpty() || !mapper.getNonMappedInnerNodesT2().isEmpty() ||
 			!mapper.getReplacementsInvolvingMethodInvocationForInline().isEmpty() || mapper.containsCompositeMappingWithoutReplacements()) {
 			List<AbstractCall> removedOperationInvocations = callCountMap != null ? callCountMap.get(removedOperation) : matchingInvocations(removedOperation, operationInvocations, mapper.getContainer1());
-			if(removedOperationInvocations.size() > 0 && !invocationMatchesWithAddedOperation(removedOperationInvocations.get(0), mapper.getContainer1(), mapper.getContainer2().getAllOperationInvocations())) {
+			if(removedOperationInvocations != null && removedOperationInvocations.size() > 0 && !invocationMatchesWithAddedOperation(removedOperationInvocations.get(0), mapper.getContainer1(), mapper.getContainer2().getAllOperationInvocations())) {
 				int otherAddedMethodsCalled = 0;
 				int otherAddedMethodsCalledWithSameOrMoreCallSites = 0;
 				for(UMLOperation removedOperation1 : this.removedOperations) {
@@ -138,33 +138,36 @@ public class InlineOperationDetection {
 			for(AbstractCodeMapping mapping : mapper.getMappings()) {
 				for(Replacement r : mapping.getReplacements()) {
 					if(r.getBefore().contains(removedOperation.getName() + "(")) {
-						if(expression.equals(r.getAfter())) {
-							List<LeafExpression> expressions2 = mapping.getFragment2().findExpression(r.getAfter());
-							List<LeafExpression> expressions1 = singleReturnStatement.findExpression(expression);
-							if(expressions1.size() == 1) {
-								for(LeafExpression expression2 : expressions2) {
-									LeafMapping newMapping = new LeafMapping(expressions1.get(0), expression2, removedOperation, mapper.getContainer2());
-									operationBodyMapper.addMapping(newMapping);
-								}
-							}
-						}
-						else if(operationBodyMapper.getParameterToArgumentMap1().isPresent()) {
+						String afterExpr = r.getAfter();
+						// Handle case where replacement is full statement, not just expression
+						if(operationBodyMapper.getParameterToArgumentMap1().isPresent()) {
 							Map<String, String> parameterToArgumentMap = operationBodyMapper.getParameterToArgumentMap1().get();
-							String after = r.getAfter();
+							String expressionAfterSubst = expression;
 							for(String key : parameterToArgumentMap.keySet()) {
 								String value = parameterToArgumentMap.get(key);
 								if(!key.equals(value)) {
-									after = ReplacementUtil.performReplacement(after, value, key);
+									expressionAfterSubst = ReplacementUtil.performReplacement(expressionAfterSubst, key, value);
 								}
 							}
-							if(expression.equals(after)) {
-								List<LeafExpression> expressions2 = mapping.getFragment2().findExpression(r.getAfter());
+							// Check if afterExpr contains the substituted expression
+							if(afterExpr.contains(expressionAfterSubst)) {
+								List<LeafExpression> expressions2 = mapping.getFragment2().findExpression(expressionAfterSubst);
 								List<LeafExpression> expressions1 = singleReturnStatement.findExpression(expression);
 								if(expressions1.size() == 1) {
 									for(LeafExpression expression2 : expressions2) {
 										LeafMapping newMapping = new LeafMapping(expressions1.get(0), expression2, removedOperation, mapper.getContainer2());
 										operationBodyMapper.addMapping(newMapping);
 									}
+								}
+							}
+						}
+						else if(expression.equals(afterExpr)) {
+							List<LeafExpression> expressions2 = mapping.getFragment2().findExpression(afterExpr);
+							List<LeafExpression> expressions1 = singleReturnStatement.findExpression(expression);
+							if(expressions1.size() == 1) {
+								for(LeafExpression expression2 : expressions2) {
+									LeafMapping newMapping = new LeafMapping(expressions1.get(0), expression2, removedOperation, mapper.getContainer2());
+									operationBodyMapper.addMapping(newMapping);
 								}
 							}
 						}
@@ -359,6 +362,19 @@ public class InlineOperationDetection {
 				if(leaf1.countableStatement() && leaf1.getString().equals(LANG.RETURN_SPACE + variableDeclaration.getVariableName() + LANG.STATEMENT_TERMINATION)) {
 					nonMappedElementsT1--;
 					break;
+				}
+			}
+		}
+		// Check if non-mapped return statements have their expressions mapped
+		for(AbstractCodeFragment leaf1 : operationBodyMapper.getNonMappedLeavesT1()) {
+			if(leaf1.countableStatement() && leaf1.getString().startsWith(LANG.RETURN_SPACE)) {
+				// Check if any mapping covers an expression within this return statement
+				for(AbstractCodeMapping mapping : operationBodyMapper.getMappings()) {
+					if(mapping.getFragment1().getLocationInfo().subsumes(leaf1.getLocationInfo()) ||
+					   leaf1.getLocationInfo().subsumes(mapping.getFragment1().getLocationInfo())) {
+						nonMappedElementsT1--;
+						break;
+					}
 				}
 			}
 		}

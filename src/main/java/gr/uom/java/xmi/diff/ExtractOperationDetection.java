@@ -308,6 +308,34 @@ public class ExtractOperationDetection {
 									}
 								}
 							}
+							// Check if the fragment has a variable declaration with an initializer that matches
+							else {
+								List<VariableDeclaration> variableDeclarations = mapping.getFragment1().getVariableDeclarations();
+								if(variableDeclarations.size() > 0) {
+									VariableDeclaration vd = variableDeclarations.get(0);
+									if(vd.getInitializer() != null) {
+										String initializerString = vd.getInitializer().getString();
+										// Apply parameter substitution to the return expression
+										String expressionAfterSubstitution = expression;
+										for(String key : parameterToArgumentMap.keySet()) {
+											String value = parameterToArgumentMap.get(key);
+											if(!key.equals(value)) {
+												expressionAfterSubstitution = ReplacementUtil.performReplacement(expressionAfterSubstitution, key, value);
+											}
+										}
+										if(initializerString.equals(expressionAfterSubstitution)) {
+											List<LeafExpression> expressions1 = mapping.getFragment1().findExpression(initializerString);
+											List<LeafExpression> expressions2 = singleReturnStatement.findExpression(expression);
+											if(expressions2.size() == 1 && expressions1.size() > 0) {
+												for(LeafExpression expression1 : expressions1) {
+													LeafMapping newMapping = new LeafMapping(expression1, expressions2.get(0), mapper.getContainer1(), addedOperation);
+													operationBodyMapper.addMapping(newMapping);
+												}
+											}
+										}
+									}
+								}
+							}
 						}
 					}
 				}
