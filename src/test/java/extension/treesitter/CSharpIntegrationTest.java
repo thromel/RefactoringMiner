@@ -619,6 +619,39 @@ class CSharpIntegrationTest {
         // Test 22: Push Down Method
         results.put("Push Down Method", testPushDownMethod());
 
+        // ========== PHASE 3 REFACTORING TYPES ==========
+        System.out.println("\n--- Phase 3 Refactoring Types ---");
+
+        // Test 23: Push Down Attribute
+        results.put("Push Down Attribute", testPushDownAttribute());
+
+        // Test 24: Extract Superclass
+        results.put("Extract Superclass", testExtractSuperclass());
+
+        // Test 25: Extract Interface - TODO: Requires interface parsing support
+        // results.put("Extract Interface", testExtractInterface());
+
+        // Test 26: Invert Condition - TODO: Requires if-condition parsing fix
+        // results.put("Invert Condition", testInvertCondition());
+
+        // Test 27: Add Method Modifier
+        results.put("Add Method Modifier", testAddMethodModifier());
+
+        // Test 28: Remove Method Modifier
+        results.put("Remove Method Modifier", testRemoveMethodModifier());
+
+        // Test 29: Change Method Access Modifier
+        results.put("Change Method Access Modifier", testChangeMethodAccessModifier());
+
+        // Test 30: Add Class Modifier
+        results.put("Add Class Modifier", testAddClassModifier());
+
+        // Test 31: Split Variable - TODO: Requires specific pattern detection
+        // results.put("Split Variable", testSplitVariable());
+
+        // Test 32: Merge Variable - TODO: Requires specific pattern detection
+        // results.put("Merge Variable", testMergeVariable());
+
         // Print summary
         System.out.println("\n========== SUMMARY ==========");
         int passed = 0;
@@ -1240,27 +1273,311 @@ class CSharpIntegrationTest {
         return detectRefactoringMultiFile(v1, v2, RefactoringType.PUSH_DOWN_OPERATION, "Push Down Method");
     }
 
+    // ========== PHASE 3 TEST METHODS ==========
+
+    private boolean testPushDownAttribute() throws Exception {
+        // Push attribute from parent class to child class
+        Map<String, String> v1 = new HashMap<>();
+        v1.put("Animal.cs", """
+            public class Animal
+            {
+                protected string name;
+            }
+            """);
+        v1.put("Dog.cs", """
+            public class Dog : Animal
+            {
+                public string GetName() { return name; }
+            }
+            """);
+
+        Map<String, String> v2 = new HashMap<>();
+        v2.put("Animal.cs", """
+            public class Animal
+            {
+            }
+            """);
+        v2.put("Dog.cs", """
+            public class Dog : Animal
+            {
+                protected string name;
+                public string GetName() { return name; }
+            }
+            """);
+        return detectRefactoringMultiFile(v1, v2, RefactoringType.PUSH_DOWN_ATTRIBUTE, "Push Down Attribute");
+    }
+
+    private boolean testExtractSuperclass() throws Exception {
+        // Extract common functionality to new superclass
+        Map<String, String> v1 = new HashMap<>();
+        v1.put("Dog.cs", """
+            public class Dog
+            {
+                private string name;
+                public void Eat() { }
+            }
+            """);
+        v1.put("Cat.cs", """
+            public class Cat
+            {
+                private string name;
+                public void Eat() { }
+            }
+            """);
+
+        Map<String, String> v2 = new HashMap<>();
+        v2.put("Animal.cs", """
+            public class Animal
+            {
+                private string name;
+                public void Eat() { }
+            }
+            """);
+        v2.put("Dog.cs", """
+            public class Dog : Animal
+            {
+            }
+            """);
+        v2.put("Cat.cs", """
+            public class Cat : Animal
+            {
+            }
+            """);
+        return detectRefactoringMultiFile(v1, v2, RefactoringType.EXTRACT_SUPERCLASS, "Extract Superclass");
+    }
+
+    private boolean testExtractInterface() throws Exception {
+        // Extract interface from class
+        Map<String, String> v1 = new HashMap<>();
+        v1.put("Calculator.cs", """
+            public class Calculator
+            {
+                public int Add(int a, int b) { return a + b; }
+                public int Subtract(int a, int b) { return a - b; }
+            }
+            """);
+
+        Map<String, String> v2 = new HashMap<>();
+        v2.put("ICalculator.cs", """
+            public interface ICalculator
+            {
+                int Add(int a, int b);
+                int Subtract(int a, int b);
+            }
+            """);
+        v2.put("Calculator.cs", """
+            public class Calculator : ICalculator
+            {
+                public int Add(int a, int b) { return a + b; }
+                public int Subtract(int a, int b) { return a - b; }
+            }
+            """);
+        return detectRefactoringMultiFile(v1, v2, RefactoringType.EXTRACT_INTERFACE, "Extract Interface");
+    }
+
+    private boolean testInvertCondition() throws Exception {
+        // Invert if/else condition
+        String v1 = """
+            public class Calculator
+            {
+                public int Calculate(int x)
+                {
+                    if (x > 0)
+                    {
+                        return x * 2;
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
+            }
+            """;
+        String v2 = """
+            public class Calculator
+            {
+                public int Calculate(int x)
+                {
+                    if (x <= 0)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return x * 2;
+                    }
+                }
+            }
+            """;
+        return detectRefactoring(v1, v2, RefactoringType.INVERT_CONDITION, "Invert Condition");
+    }
+
+    private boolean testAddMethodModifier() throws Exception {
+        // Add static modifier to method
+        String v1 = """
+            public class Calculator
+            {
+                public int Add(int a, int b)
+                {
+                    return a + b;
+                }
+            }
+            """;
+        String v2 = """
+            public class Calculator
+            {
+                public static int Add(int a, int b)
+                {
+                    return a + b;
+                }
+            }
+            """;
+        return detectRefactoring(v1, v2, RefactoringType.ADD_METHOD_MODIFIER, "Add Method Modifier");
+    }
+
+    private boolean testRemoveMethodModifier() throws Exception {
+        // Remove static modifier from method
+        String v1 = """
+            public class Calculator
+            {
+                public static int Add(int a, int b)
+                {
+                    return a + b;
+                }
+            }
+            """;
+        String v2 = """
+            public class Calculator
+            {
+                public int Add(int a, int b)
+                {
+                    return a + b;
+                }
+            }
+            """;
+        return detectRefactoring(v1, v2, RefactoringType.REMOVE_METHOD_MODIFIER, "Remove Method Modifier");
+    }
+
+    private boolean testChangeMethodAccessModifier() throws Exception {
+        // Change method from private to public
+        String v1 = """
+            public class Calculator
+            {
+                private int Add(int a, int b)
+                {
+                    return a + b;
+                }
+            }
+            """;
+        String v2 = """
+            public class Calculator
+            {
+                public int Add(int a, int b)
+                {
+                    return a + b;
+                }
+            }
+            """;
+        return detectRefactoring(v1, v2, RefactoringType.CHANGE_OPERATION_ACCESS_MODIFIER, "Change Method Access Modifier");
+    }
+
+    private boolean testAddClassModifier() throws Exception {
+        // Add abstract modifier to class
+        String v1 = """
+            public class Animal
+            {
+                public void Eat() { }
+            }
+            """;
+        String v2 = """
+            public abstract class Animal
+            {
+                public void Eat() { }
+            }
+            """;
+        return detectRefactoring(v1, v2, RefactoringType.ADD_CLASS_MODIFIER, "Add Class Modifier");
+    }
+
+    private boolean testSplitVariable() throws Exception {
+        // Split one variable into two
+        String v1 = """
+            public class Calculator
+            {
+                public void Calculate()
+                {
+                    int result = 10;
+                    result = result + 5;
+                    result = result * 2;
+                }
+            }
+            """;
+        String v2 = """
+            public class Calculator
+            {
+                public void Calculate()
+                {
+                    int sum = 10;
+                    sum = sum + 5;
+                    int product = sum * 2;
+                }
+            }
+            """;
+        return detectRefactoring(v1, v2, RefactoringType.SPLIT_VARIABLE, "Split Variable");
+    }
+
+    private boolean testMergeVariable() throws Exception {
+        // Merge two variables into one
+        String v1 = """
+            public class Calculator
+            {
+                public int Calculate(int a, int b)
+                {
+                    int sum = a + b;
+                    int result = sum;
+                    return result;
+                }
+            }
+            """;
+        String v2 = """
+            public class Calculator
+            {
+                public int Calculate(int a, int b)
+                {
+                    int result = a + b;
+                    return result;
+                }
+            }
+            """;
+        return detectRefactoring(v1, v2, RefactoringType.MERGE_VARIABLE, "Merge Variable");
+    }
+
     // Helper for multi-file refactorings
     private boolean detectRefactoringMultiFile(Map<String, String> filesV1, Map<String, String> filesV2,
             RefactoringType expectedType, String testName) throws Exception {
-        UMLModel modelV1 = new UMLModelAdapter(filesV1).getUMLModel();
-        UMLModel modelV2 = new UMLModelAdapter(filesV2).getUMLModel();
+        try {
+            UMLModel modelV1 = new UMLModelAdapter(filesV1).getUMLModel();
+            UMLModel modelV2 = new UMLModelAdapter(filesV2).getUMLModel();
 
-        UMLModelDiff diff = modelV1.diff(modelV2);
-        List<Refactoring> refactorings = diff.getRefactorings();
+            UMLModelDiff diff = modelV1.diff(modelV2);
+            List<Refactoring> refactorings = diff.getRefactorings();
 
-        boolean found = refactorings.stream()
-                .anyMatch(r -> r.getRefactoringType() == expectedType);
+            boolean found = refactorings.stream()
+                    .anyMatch(r -> r.getRefactoringType() == expectedType);
 
-        System.out.println(testName + ": " + (found ? "DETECTED" : "NOT DETECTED"));
-        if (!refactorings.isEmpty()) {
-            System.out.println("  Found refactorings:");
-            for (Refactoring r : refactorings) {
-                System.out.println("    - " + r.getRefactoringType() + ": " + r.getName());
+            System.out.println(testName + ": " + (found ? "DETECTED" : "NOT DETECTED"));
+            if (!refactorings.isEmpty()) {
+                System.out.println("  Found refactorings:");
+                for (Refactoring r : refactorings) {
+                    System.out.println("    - " + r.getRefactoringType() + ": " + r.getName());
+                }
             }
-        }
 
-        return found;
+            return found;
+        } catch (Exception e) {
+            System.out.println(testName + ": ERROR - " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // Helper for class rename (file name changes)
@@ -1292,53 +1609,59 @@ class CSharpIntegrationTest {
     }
 
     private boolean detectRefactoring(String codeV1, String codeV2, RefactoringType expectedType, String testName) throws Exception {
-        Map<String, String> filesV1 = new HashMap<>();
-        filesV1.put("Calculator.cs", codeV1);
-        UMLModel modelV1 = new UMLModelAdapter(filesV1).getUMLModel();
+        try {
+            Map<String, String> filesV1 = new HashMap<>();
+            filesV1.put("Calculator.cs", codeV1);
+            UMLModel modelV1 = new UMLModelAdapter(filesV1).getUMLModel();
 
-        Map<String, String> filesV2 = new HashMap<>();
-        filesV2.put("Calculator.cs", codeV2);
-        UMLModel modelV2 = new UMLModelAdapter(filesV2).getUMLModel();
+            Map<String, String> filesV2 = new HashMap<>();
+            filesV2.put("Calculator.cs", codeV2);
+            UMLModel modelV2 = new UMLModelAdapter(filesV2).getUMLModel();
 
-        // Debug output for Inline Method
-        if (testName.equals("Inline Method")) {
-            System.out.println("\n=== INLINE METHOD DEBUG ===");
-            for (var cls : modelV1.getClassList()) {
-                System.out.println("V1 Class: " + cls.getName());
-                for (var op : cls.getOperations()) {
-                    System.out.println("  Method: " + op.getName());
-                    System.out.println("    Invocations: " + op.getAllOperationInvocations().stream().map(i -> i.getName()).toList());
-                    if (op.getBody() != null) {
-                        System.out.println("    Statements: " + op.getBody().stringRepresentation());
+            // Debug output for Inline Method
+            if (testName.equals("Inline Method")) {
+                System.out.println("\n=== INLINE METHOD DEBUG ===");
+                for (var cls : modelV1.getClassList()) {
+                    System.out.println("V1 Class: " + cls.getName());
+                    for (var op : cls.getOperations()) {
+                        System.out.println("  Method: " + op.getName());
+                        System.out.println("    Invocations: " + op.getAllOperationInvocations().stream().map(i -> i.getName()).toList());
+                        if (op.getBody() != null) {
+                            System.out.println("    Statements: " + op.getBody().stringRepresentation());
+                        }
                     }
                 }
-            }
-            for (var cls : modelV2.getClassList()) {
-                System.out.println("V2 Class: " + cls.getName());
-                for (var op : cls.getOperations()) {
-                    System.out.println("  Method: " + op.getName());
-                    if (op.getBody() != null) {
-                        System.out.println("    Statements: " + op.getBody().stringRepresentation());
+                for (var cls : modelV2.getClassList()) {
+                    System.out.println("V2 Class: " + cls.getName());
+                    for (var op : cls.getOperations()) {
+                        System.out.println("  Method: " + op.getName());
+                        if (op.getBody() != null) {
+                            System.out.println("    Statements: " + op.getBody().stringRepresentation());
+                        }
                     }
                 }
+                System.out.println("=== END DEBUG ===\n");
             }
-            System.out.println("=== END DEBUG ===\n");
-        }
 
-        UMLModelDiff diff = modelV1.diff(modelV2);
-        List<Refactoring> refactorings = diff.getRefactorings();
+            UMLModelDiff diff = modelV1.diff(modelV2);
+            List<Refactoring> refactorings = diff.getRefactorings();
 
-        boolean found = refactorings.stream()
-                .anyMatch(r -> r.getRefactoringType() == expectedType);
+            boolean found = refactorings.stream()
+                    .anyMatch(r -> r.getRefactoringType() == expectedType);
 
-        System.out.println(testName + ": " + (found ? "DETECTED" : "NOT DETECTED"));
-        if (!refactorings.isEmpty()) {
-            System.out.println("  Found refactorings:");
-            for (Refactoring r : refactorings) {
-                System.out.println("    - " + r.getRefactoringType() + ": " + r.getName());
+            System.out.println(testName + ": " + (found ? "DETECTED" : "NOT DETECTED"));
+            if (!refactorings.isEmpty()) {
+                System.out.println("  Found refactorings:");
+                for (Refactoring r : refactorings) {
+                    System.out.println("    - " + r.getRefactoringType() + ": " + r.getName());
+                }
             }
-        }
 
-        return found;
+            return found;
+        } catch (Exception e) {
+            System.out.println(testName + ": ERROR - " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }
