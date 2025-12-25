@@ -230,17 +230,22 @@ public class VariableDeclaration implements LocationInfoProvider, VariableDeclar
 		this.modifiers = new ArrayList<>();
 
 		// Extract the right-hand side of the assignment as the initializer
-		this.initializer = new AbstractExpression(
-				assignment.getRootCompilationUnit(),
-				sourceFolder,
-				filePath,
-				assignment.getRightSide(),
-				LocationInfo.CodeElementType.EXPRESSION,
-				container,
-				activeVariableDeclarations,
-				fileContent
-		);
-		AbstractCall creationCoveringEntireFragment = initializer.creationCoveringEntireFragment();
+		// Handle null right side (for field declarations without initializers)
+		if (assignment.getRightSide() != null) {
+			this.initializer = new AbstractExpression(
+					assignment.getRootCompilationUnit(),
+					sourceFolder,
+					filePath,
+					assignment.getRightSide(),
+					LocationInfo.CodeElementType.EXPRESSION,
+					container,
+					activeVariableDeclarations,
+					fileContent
+			);
+		} else {
+			this.initializer = null;
+		}
+		AbstractCall creationCoveringEntireFragment = initializer != null ? initializer.creationCoveringEntireFragment() : null;
 		if(creationCoveringEntireFragment != null ) {
 			this.type = ((ObjectCreation)creationCoveringEntireFragment).getType();
 		}
