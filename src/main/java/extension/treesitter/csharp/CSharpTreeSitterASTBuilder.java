@@ -472,6 +472,7 @@ public class CSharpTreeSitterASTBuilder extends AbstractTreeSitterASTBuilder {
             if (!type.isEmpty()) {
                 TypeObjectEnum typeEnum = TypeObjectEnum.fromType(type);
                 varDecl.setTypeAnnotation(typeEnum != null ? typeEnum : TypeObjectEnum.OBJECT);
+                varDecl.setHasTypeAnnotation(true);
             }
             return LangASTNodeFactory.createAssignment("=", varDecl, initializer, positionInfo);
         }
@@ -538,6 +539,7 @@ public class CSharpTreeSitterASTBuilder extends AbstractTreeSitterASTBuilder {
             if (!fieldType.isEmpty()) {
                 TypeObjectEnum typeEnum = TypeObjectEnum.fromType(fieldType);
                 varDecl.setTypeAnnotation(typeEnum != null ? typeEnum : TypeObjectEnum.OBJECT);
+                varDecl.setHasTypeAnnotation(true);
             }
 
             // Create assignment with variable declaration as left side
@@ -957,6 +959,7 @@ public class CSharpTreeSitterASTBuilder extends AbstractTreeSitterASTBuilder {
             if (!typeName.isEmpty()) {
                 TypeObjectEnum typeEnum = TypeObjectEnum.fromType(typeName);
                 decl.setTypeAnnotation(typeEnum != null ? typeEnum : TypeObjectEnum.OBJECT);
+                decl.setHasTypeAnnotation(true);
             }
             return LangASTNodeFactory.createExpressionStatement(decl, extractPosition(node));
         }
