@@ -475,20 +475,35 @@ public class UMLModelAdapter {
                                                String sourceFolder, String filePath, String fileContent) {
         LangASTNode leftSide = assignment.getLeftSide();
 
-        if (leftSide instanceof LangSimpleName simpleName) {
-            String attributeName = simpleName.getIdentifier();
+        String attributeName = null;
+        UMLType attributeType = UMLType.extractTypeObject("Object");
+        LangASTNode locationNode = leftSide;
 
+        // Handle different left side types to extract name and type
+        if (leftSide instanceof LangSingleVariableDeclaration varDecl) {
+            // C# fields use LangSingleVariableDeclaration which carries type info
+            attributeName = varDecl.getLangSimpleName().getIdentifier();
+            if (varDecl.getTypeAnnotation() != null) {
+                LocationInfo typeLocationInfo = new LocationInfo(sourceFolder, filePath, varDecl, LocationInfo.CodeElementType.TYPE);
+                attributeType = UMLType.extractTypeObject(varDecl.getTypeAnnotation().getName(), "[", "]", typeLocationInfo);
+            }
+        } else if (leftSide instanceof LangSimpleName simpleName) {
+            // Python-style simple assignments
+            attributeName = simpleName.getIdentifier();
+        }
+
+        if (attributeName != null) {
             // Create UMLAttribute
             LocationInfo attributeLocationInfo = new LocationInfo(
                     assignment.getRootCompilationUnit(),
                     sourceFolder,
                     filePath,
-                    simpleName,
+                    locationNode,
                     LocationInfo.CodeElementType.FIELD_DECLARATION
             );
             UMLAttribute attribute = new UMLAttribute(
                     attributeName,
-                    UMLType.extractTypeObject("Object"),
+                    attributeType,
                     attributeLocationInfo
             );
             // Create VariableDeclaration for the attribute using the new constructor
@@ -500,8 +515,6 @@ public class UMLModelAdapter {
                     attribute,
                     fileContent
             );
-
-
 
             // Set the variable declaration on the attribute
             attribute.setVariableDeclaration(variableDeclaration);
