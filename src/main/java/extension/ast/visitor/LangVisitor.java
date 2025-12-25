@@ -126,6 +126,11 @@ public class LangVisitor implements LangASTVisitor {
                 LocationInfo.CodeElementType.SIMPLE_NAME,
                 container);
         variables.add(variable);
+
+        // Visit the initializer (defaultValue) to find method invocations, etc.
+        if (langSingleVariableDeclaration.getDefaultValue() != null) {
+            langSingleVariableDeclaration.getDefaultValue().accept(this);
+        }
     }
 
 
@@ -960,6 +965,8 @@ public class LangVisitor implements LangASTVisitor {
             printer = switch (cu.getLanguage()) {
                 case PYTHON -> new PyASTFlattener(node);
                 case CSHARP -> new CSharpASTFlattener(node);
+                // New languages - use Python flattener as default for now
+                case TYPESCRIPT, JAVASCRIPT, GO, RUST, RUBY -> new PyASTFlattener(node);
             };
         } else {
             printer = new PyASTFlattener(node);

@@ -31,6 +31,11 @@ public class LangASTNodeFactory {
         return new LangCompilationUnit(PositionUtils.getPositionInfo(ctx));
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangCompilationUnit createCompilationUnit(PositionInfo positionInfo) {
+        return new LangCompilationUnit(positionInfo);
+    }
+
     /**
      * Creates a basic import statement with position information only
      */
@@ -52,11 +57,31 @@ public class LangASTNodeFactory {
         return type;
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangTypeDeclaration createTypeDeclaration(String name, PositionInfo positionInfo) {
+        LangTypeDeclaration type = new LangTypeDeclaration(positionInfo);
+        type.setName(name);
+        return type;
+    }
+
     public static LangMethodDeclaration createMethodDeclaration(String name, ParserRuleContext ctx, List<LangSingleVariableDeclaration> langSingleVariableDeclarations, LangBlock body) {
         LangMethodDeclaration method = new LangMethodDeclaration(PositionUtils.getPositionInfo(ctx));
         method.setName(name);
         if (langSingleVariableDeclarations != null) {
             langSingleVariableDeclarations.forEach(method::addParameter);
+        }
+        if (body != null) {
+            method.setBody(body);
+        }
+        return method;
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangMethodDeclaration createMethodDeclaration(String name, PositionInfo positionInfo, List<LangSingleVariableDeclaration> params, LangBlock body) {
+        LangMethodDeclaration method = new LangMethodDeclaration(positionInfo);
+        method.setName(name);
+        if (params != null) {
+            params.forEach(method::addParameter);
         }
         if (body != null) {
             method.setBody(body);
@@ -73,13 +98,34 @@ public class LangASTNodeFactory {
         return decl;
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangSingleVariableDeclaration createSingleVariableDeclaration(String name, LangASTNode defaultValue, PositionInfo positionInfo) {
+        LangSimpleName langSimpleName = createSimpleName(name, positionInfo);
+        LangSingleVariableDeclaration decl = new LangSingleVariableDeclaration(langSimpleName, defaultValue, positionInfo);
+        decl.setTypeAnnotation(TypeObjectEnum.OBJECT);
+        return decl;
+    }
+
     /** Expressions */
     public static LangSimpleName createSimpleName(String name, ParserRuleContext ctx) {
         return new LangSimpleName(name, PositionUtils.getPositionInfo(ctx));
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangSimpleName createSimpleName(String name, PositionInfo positionInfo) {
+        return new LangSimpleName(name, positionInfo);
+    }
+
     public static LangAssignment createAssignment(String operator, LangASTNode left, LangASTNode right, ParserRuleContext ctx) {
         LangAssignment langAssignment = new LangAssignment(operator, left, right, PositionUtils.getPositionInfo(ctx));
+        langAssignment.addChild(left);
+        langAssignment.addChild(right);
+        return langAssignment;
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangAssignment createAssignment(String operator, LangASTNode left, LangASTNode right, PositionInfo positionInfo) {
+        LangAssignment langAssignment = new LangAssignment(operator, left, right, positionInfo);
         langAssignment.addChild(left);
         langAssignment.addChild(right);
         return langAssignment;
@@ -90,13 +136,30 @@ public class LangASTNodeFactory {
         return new LangInfixExpression(left, operator, right, PositionUtils.getPositionInfo(ctx));
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangInfixExpression createInfixExpression(LangASTNode left, LangASTNode right, String operatorSymbol, PositionInfo positionInfo) {
+        OperatorEnum operator = OperatorEnum.fromSymbol(operatorSymbol);
+        return new LangInfixExpression(left, operator, right, positionInfo);
+    }
+
     public static LangMethodInvocation createMethodInvocation(ParserRuleContext ctx) {
         return new LangMethodInvocation(PositionUtils.getPositionInfo(ctx));
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangMethodInvocation createMethodInvocation(PositionInfo positionInfo) {
+        return new LangMethodInvocation(positionInfo);
     }
 
     public static LangFieldAccess createFieldAccess(LangASTNode expression, String fieldName, ParserRuleContext ctx) {
         LangSimpleName name = createSimpleName(fieldName, ctx);
         return new LangFieldAccess(expression, name, PositionUtils.getPositionInfo(ctx));
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangFieldAccess createFieldAccess(LangASTNode expression, String fieldName, PositionInfo positionInfo) {
+        LangSimpleName name = createSimpleName(fieldName, positionInfo);
+        return new LangFieldAccess(expression, name, positionInfo);
     }
 
     /** Prefix and Postfix Expressions */
@@ -125,8 +188,22 @@ public class LangASTNodeFactory {
         return langBlock;
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangBlock createBlock(PositionInfo positionInfo, List<LangASTNode> statements) {
+        LangBlock langBlock = new LangBlock(positionInfo);
+        if (statements != null) {
+            statements.forEach(langBlock::addStatement);
+        }
+        return langBlock;
+    }
+
     public static LangIfStatement createIfStatement(LangASTNode condition, LangBlock body, LangASTNode elseBody, ParserRuleContext ctx) {
         return new LangIfStatement(condition, body, elseBody, PositionUtils.getPositionInfo(ctx));
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangIfStatement createIfStatement(LangASTNode condition, LangBlock body, LangASTNode elseBody, PositionInfo positionInfo) {
+        return new LangIfStatement(condition, body, elseBody, positionInfo);
     }
 
     public static LangForStatement createForStatement(List<LangSingleVariableDeclaration> initializers, LangASTNode condition,
@@ -135,12 +212,33 @@ public class LangASTNodeFactory {
         return new LangForStatement(initializers, condition, updates, loopBody, elseBody, PositionUtils.getPositionInfo(ctx));
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangForStatement createForStatement(List<LangSingleVariableDeclaration> initializers, LangASTNode condition,
+                                                      List<LangASTNode> updates, LangBlock loopBody,
+                                                      LangBlock elseBody, PositionInfo positionInfo) {
+        return new LangForStatement(initializers, condition, updates, loopBody, elseBody, positionInfo);
+    }
+
     public static LangWhileStatement createWhileStatement(LangASTNode condition, LangBlock body, LangBlock elseBody, ParserRuleContext ctx) {
         return new LangWhileStatement(condition, body, elseBody, PositionUtils.getPositionInfo(ctx));
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangWhileStatement createWhileStatement(LangASTNode condition, LangBlock body, LangBlock elseBody, PositionInfo positionInfo) {
+        return new LangWhileStatement(condition, body, elseBody, positionInfo);
+    }
+
     public static LangReturnStatement createReturnStatement(LangASTNode expression, ParserRuleContext ctx) {
         LangReturnStatement langReturnStatement = new LangReturnStatement(PositionUtils.getPositionInfo(ctx));
+        if (expression != null) {
+            langReturnStatement.setExpression(expression);
+        }
+        return langReturnStatement;
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangReturnStatement createReturnStatement(LangASTNode expression, PositionInfo positionInfo) {
+        LangReturnStatement langReturnStatement = new LangReturnStatement(positionInfo);
         if (expression != null) {
             langReturnStatement.setExpression(expression);
         }
@@ -154,6 +252,16 @@ public class LangASTNodeFactory {
             statement.addChild(expression);
         }
 
+        return statement;
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangExpressionStatement createExpressionStatement(LangASTNode expression, PositionInfo positionInfo) {
+        LangExpressionStatement statement = new LangExpressionStatement(positionInfo);
+        if (expression != null) {
+            statement.setExpression(expression);
+            statement.addChild(expression);
+        }
         return statement;
     }
 
@@ -363,32 +471,72 @@ public class LangASTNodeFactory {
         return new LangNumberLiteral(PositionUtils.getPositionInfo(ctx), value);
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangNumberLiteral createNumberLiteral(PositionInfo positionInfo, String value) {
+        return new LangNumberLiteral(positionInfo, value);
+    }
+
     public static LangStringLiteral createStringLiteral(ParserRuleContext ctx, String value) {
         return new LangStringLiteral(PositionUtils.getPositionInfo(ctx), PyASTBuilderUtil.removeQuotes(value));
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangStringLiteral createStringLiteral(PositionInfo positionInfo, String value) {
+        return new LangStringLiteral(positionInfo, value);
     }
 
     public static LangBooleanLiteral createBooleanLiteral(ParserRuleContext ctx, boolean value) {
         return new LangBooleanLiteral(PositionUtils.getPositionInfo(ctx), value);
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangBooleanLiteral createBooleanLiteral(PositionInfo positionInfo, boolean value) {
+        return new LangBooleanLiteral(positionInfo, value);
+    }
+
     public static LangListLiteral createListLiteral(ParserRuleContext ctx, List<LangASTNode> elements) {
         return new LangListLiteral(PositionUtils.getPositionInfo(ctx), elements);
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangListLiteral createListLiteral(PositionInfo positionInfo, List<LangASTNode> elements) {
+        return new LangListLiteral(positionInfo, elements);
     }
 
     public static LangTupleLiteral createTupleLiteral(ParserRuleContext ctx, List<LangASTNode> elements) {
         return new LangTupleLiteral(PositionUtils.getPositionInfo(ctx), elements);
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangTupleLiteral createTupleLiteral(PositionInfo positionInfo, List<LangASTNode> elements) {
+        return new LangTupleLiteral(positionInfo, elements);
+    }
+
     public static LangDictionaryLiteral createDictionaryLiteral(ParserRuleContext ctx) {
         return new LangDictionaryLiteral(PositionUtils.getPositionInfo(ctx));
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangDictionaryLiteral createDictionaryLiteral(PositionInfo positionInfo) {
+        return new LangDictionaryLiteral(positionInfo);
     }
 
     public static LangNullLiteral createNullLiteral(ParserRuleContext ctx) {
         return new LangNullLiteral(PositionUtils.getPositionInfo(ctx));
     }
 
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangNullLiteral createNullLiteral(PositionInfo positionInfo) {
+        return new LangNullLiteral(positionInfo);
+    }
+
     public static LangEllipsisLiteral createEllipsisLiteral(ParserRuleContext ctx) {
         return new LangEllipsisLiteral(PositionUtils.getPositionInfo(ctx));
+    }
+
+    /** Tree-sitter overload using PositionInfo directly */
+    public static LangEllipsisLiteral createEllipsisLiteral(PositionInfo positionInfo) {
+        return new LangEllipsisLiteral(positionInfo);
     }
 
     /** Metadata */

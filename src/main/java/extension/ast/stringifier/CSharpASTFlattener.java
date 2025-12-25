@@ -104,8 +104,18 @@ public class CSharpASTFlattener implements LangASTFlattener {
 
     @Override
     public void visit(LangSingleVariableDeclaration var) {
+        // Print type if available
+        if (var.getTypeAnnotation() != null) {
+            builder.append(var.getTypeAnnotation().getName()).append(" ");
+        }
+        // Print variable name
         if (var.getLangSimpleName() != null) {
             var.getLangSimpleName().accept(this);
+        }
+        // Print initializer if available (for local variables, not parameters)
+        if (var.getDefaultValue() != null && !var.isParameter()) {
+            builder.append(" = ");
+            var.getDefaultValue().accept(this);
         }
     }
 
@@ -140,7 +150,14 @@ public class CSharpASTFlattener implements LangASTFlattener {
 
     @Override
     public void visit(LangMethodInvocation call) {
-        call.getExpression().accept(this);
+        // If there's an expression (receiver), print it with a dot
+        if (call.getExpression() != null) {
+            call.getExpression().accept(this);
+            builder.append(".");
+        }
+        // Print the method name
+        builder.append(call.getName());
+        // Print arguments
         List<LangASTNode> arguments = call.getArguments();
         builder.append("(");
         if (arguments != null) {

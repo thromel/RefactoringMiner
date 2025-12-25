@@ -41,10 +41,14 @@ public enum OperatorEnum {
     NOT_EQUAL("!=", OperatorCategory.COMPARISON),
     NOT_EQUAL_ALT("<>", OperatorCategory.COMPARISON),
 
-    // Logical operators
+    // Logical operators (Python style)
     AND("and", OperatorCategory.LOGICAL),
     OR("or", OperatorCategory.LOGICAL),
     NOT("not", OperatorCategory.LOGICAL),
+    // Logical operators (C#/Java style)
+    LOGICAL_AND("&&", OperatorCategory.LOGICAL),
+    LOGICAL_OR("||", OperatorCategory.LOGICAL),
+    LOGICAL_NOT("!", OperatorCategory.LOGICAL),
 
     // Bitwise operators
     BITWISE_AND("&", OperatorCategory.BITWISE),
@@ -60,7 +64,14 @@ public enum OperatorEnum {
 
     // Identity operators
     IS("is", OperatorCategory.IDENTITY),
-    IS_NOT("isnot", OperatorCategory.IDENTITY);
+    IS_NOT("isnot", OperatorCategory.IDENTITY),
+
+    // C# specific operators
+    NULL_COALESCING("??", OperatorCategory.LOGICAL),
+    NULL_COALESCING_ASSIGN("??=", OperatorCategory.ASSIGNMENT),
+    NULL_CONDITIONAL("?.", OperatorCategory.IDENTITY),
+    LAMBDA("=>", OperatorCategory.IDENTITY),
+    AS("as", OperatorCategory.IDENTITY);
 
     private final String symbol;
     private final OperatorCategory category;

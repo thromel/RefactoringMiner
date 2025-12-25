@@ -8,7 +8,12 @@ import java.util.Arrays;
 public enum LangSupportedEnum {
 
     PYTHON("py", "python"),
-    CSHARP("cs", "csharp");
+    CSHARP("cs", "csharp"),
+    TYPESCRIPT("ts", "typescript"),
+    JAVASCRIPT("js", "javascript"),
+    GO("go", "go"),
+    RUST("rs", "rust"),
+    RUBY("rb", "ruby");
 
     private final String fileExtension;
     private final String langName;

@@ -125,8 +125,14 @@ public class PyASTFlattener implements LangASTFlattener {
 
     @Override
     public void visit(LangMethodInvocation langMethodInvocation) {
-        // Append the name of the function/method
-        langMethodInvocation.getExpression().accept(this);
+        // Append the receiver expression if present (e.g., "obj." in "obj.method()")
+        LangASTNode expression = langMethodInvocation.getExpression();
+        if (expression != null) {
+            expression.accept(this);
+        } else {
+            // No receiver - just use the method name directly
+            builder.append(langMethodInvocation.getName());
+        }
 
         // Append the argument list
         List<LangASTNode> arguments = langMethodInvocation.getArguments();
