@@ -4,17 +4,40 @@ import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.tree.TreeContext;
 import extension.ast.node.LangASTNode;
 import extension.ast.node.PositionInfo;
+import gr.uom.java.xmi.Constants;
+
+import java.util.Set;
 
 /**
  * Abstract base class for Tree-sitter AST builders.
  * Provides common functionality for traversing Tree-sitter AST and
  * extracting position information.
+ *
+ * Subclasses should implement {@link #getDialect()} to provide
+ * language-specific node type mappings.
  */
 public abstract class AbstractTreeSitterASTBuilder implements TreeSitterASTBuilder {
 
     protected TreeContext treeContext;
     protected String sourceCode;
     protected String[] sourceLines;
+
+    /**
+     * Get the language-specific dialect for this builder.
+     * The dialect provides node type mappings and language-specific behaviors.
+     *
+     * @return the TreeSitterDialect for this builder's language
+     */
+    protected abstract TreeSitterDialect getDialect();
+
+    /**
+     * Get the language constants for refactoring detection.
+     *
+     * @return the Constants enum for this language
+     */
+    protected Constants getConstants() {
+        return getDialect().getConstants();
+    }
 
     @Override
     public LangASTNode build(TreeContext treeContext, String sourceCode) {
@@ -210,5 +233,110 @@ public abstract class AbstractTreeSitterASTBuilder implements TreeSitterASTBuild
      */
     protected boolean hasChildOfType(Tree node, String typeName) {
         return findChildByType(node, typeName) != null;
+    }
+
+    // ===== DIALECT-BASED UTILITY METHODS =====
+
+    /**
+     * Check if a node represents a class declaration based on the dialect.
+     *
+     * @param node the Tree-sitter node
+     * @return true if this is a class declaration
+     */
+    protected boolean isClassDeclaration(Tree node) {
+        return getDialect().getClassDeclarationTypes().contains(getNodeType(node));
+    }
+
+    /**
+     * Check if a node represents a method declaration based on the dialect.
+     *
+     * @param node the Tree-sitter node
+     * @return true if this is a method declaration
+     */
+    protected boolean isMethodDeclaration(Tree node) {
+        String nodeType = getNodeType(node);
+        String methodType = getDialect().getMethodDeclarationType();
+        String funcType = getDialect().getFunctionDeclarationType();
+        return nodeType.equals(methodType) || (funcType != null && nodeType.equals(funcType));
+    }
+
+    /**
+     * Check if a node represents a variable declaration based on the dialect.
+     *
+     * @param node the Tree-sitter node
+     * @return true if this is a variable declaration
+     */
+    protected boolean isVariableDeclaration(Tree node) {
+        return getDialect().getVariableDeclarationTypes().contains(getNodeType(node));
+    }
+
+    /**
+     * Check if a node represents an identifier based on the dialect.
+     *
+     * @param node the Tree-sitter node
+     * @return true if this is an identifier
+     */
+    protected boolean isIdentifier(Tree node) {
+        return getDialect().getIdentifierTypes().contains(getNodeType(node));
+    }
+
+    /**
+     * Check if a node represents a block statement based on the dialect.
+     *
+     * @param node the Tree-sitter node
+     * @return true if this is a block
+     */
+    protected boolean isBlock(Tree node) {
+        String blockType = getDialect().getBlockType();
+        return blockType != null && blockType.equals(getNodeType(node));
+    }
+
+    /**
+     * Check if a method name represents a constructor based on the dialect.
+     *
+     * @param node       the method node
+     * @param methodName the method name
+     * @return true if this is a constructor
+     */
+    protected boolean isConstructor(Tree node, String methodName) {
+        return getDialect().isConstructor(node, methodName);
+    }
+
+    /**
+     * Find the class body within a class declaration node.
+     *
+     * @param classNode the class declaration node
+     * @return the class body node, or null if not found
+     */
+    protected Tree findClassBody(Tree classNode) {
+        String bodyType = getDialect().getClassBodyType();
+        if (bodyType != null) {
+            return findChildByType(classNode, bodyType);
+        }
+        return null;
+    }
+
+    /**
+     * Find the parameter list within a method declaration node.
+     *
+     * @param methodNode the method declaration node
+     * @return the parameter list node, or null if not found
+     */
+    protected Tree findParameterList(Tree methodNode) {
+        String paramListType = getDialect().getParameterListType();
+        if (paramListType != null) {
+            return findChildByType(methodNode, paramListType);
+        }
+        return null;
+    }
+
+    /**
+     * Check if a node is a parameter based on the dialect.
+     *
+     * @param node the Tree-sitter node
+     * @return true if this is a parameter
+     */
+    protected boolean isParameter(Tree node) {
+        return getDialect().getParameterTypes().contains(getNodeType(node));
     }
 }

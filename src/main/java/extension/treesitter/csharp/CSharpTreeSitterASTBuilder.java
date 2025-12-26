@@ -12,6 +12,7 @@ import extension.ast.node.statement.*;
 import extension.ast.node.unit.LangCompilationUnit;
 import extension.base.LangSupportedEnum;
 import extension.treesitter.AbstractTreeSitterASTBuilder;
+import extension.treesitter.TreeSitterDialect;
 import gr.uom.java.xmi.Visibility;
 
 import java.util.ArrayList;
@@ -23,9 +24,16 @@ import java.util.List;
  */
 public class CSharpTreeSitterASTBuilder extends AbstractTreeSitterASTBuilder {
 
+    private static final CSharpDialect DIALECT = new CSharpDialect();
+
+    @Override
+    protected TreeSitterDialect getDialect() {
+        return DIALECT;
+    }
+
     @Override
     public String getLanguage() {
-        return "csharp";
+        return DIALECT.getLanguageName();
     }
 
     @Override
