@@ -16,6 +16,7 @@ import extension.ast.node.unit.LangCompilationUnit;
 import extension.ast.stringifier.CSharpASTFlattener;
 import extension.ast.stringifier.LangASTFlattener;
 import extension.ast.stringifier.PyASTFlattener;
+import extension.ast.stringifier.TypeScriptASTFlattener;
 import gr.uom.java.xmi.LocationInfo;
 import gr.uom.java.xmi.VariableDeclarationContainer;
 import gr.uom.java.xmi.decomposition.*;
@@ -965,8 +966,9 @@ public class LangVisitor implements LangASTVisitor {
             printer = switch (cu.getLanguage()) {
                 case PYTHON -> new PyASTFlattener(node);
                 case CSHARP -> new CSharpASTFlattener(node);
+                case TYPESCRIPT -> new TypeScriptASTFlattener(node);
                 // New languages - use Python flattener as default for now
-                case TYPESCRIPT, JAVASCRIPT, GO, RUST, RUBY -> new PyASTFlattener(node);
+                case JAVASCRIPT, GO, RUST, RUBY -> new PyASTFlattener(node);
             };
         } else {
             printer = new PyASTFlattener(node);

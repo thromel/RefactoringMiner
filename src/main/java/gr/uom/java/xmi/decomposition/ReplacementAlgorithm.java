@@ -1761,6 +1761,19 @@ public class ReplacementAlgorithm {
 					else if(r.getBefore().equals("!=") && r.getAfter().equals("==")) {
 						booleanOperatorReversed = true;
 					}
+					// Comparison operator inversions
+					else if(r.getBefore().equals(">") && r.getAfter().equals("<=")) {
+						booleanOperatorReversed = true;
+					}
+					else if(r.getBefore().equals("<=") && r.getAfter().equals(">")) {
+						booleanOperatorReversed = true;
+					}
+					else if(r.getBefore().equals("<") && r.getAfter().equals(">=")) {
+						booleanOperatorReversed = true;
+					}
+					else if(r.getBefore().equals(">=") && r.getAfter().equals("<")) {
+						booleanOperatorReversed = true;
+					}
 				}
 				if(booleanOperatorReversed) {
 					if(statement1 instanceof AbstractExpression) {

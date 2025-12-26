@@ -1436,6 +1436,15 @@ public class StringBasedHeuristics {
 				return false;
 			if(replacement.getBefore().equals(OR) && !replacement.getAfter().equals(AND))
 				return false;
+			// Comparison operator inversions
+			if(replacement.getBefore().equals(">") && !replacement.getAfter().equals("<="))
+				return false;
+			if(replacement.getBefore().equals("<=") && !replacement.getAfter().equals(">"))
+				return false;
+			if(replacement.getBefore().equals("<") && !replacement.getAfter().equals(">="))
+				return false;
+			if(replacement.getBefore().equals(">=") && !replacement.getAfter().equals("<"))
+				return false;
 		}
 		return true;
 	}
@@ -3092,6 +3101,56 @@ public class StringBasedHeuristics {
 						break;
 					}
 				}
+				// Handle comparison operator inversions: > vs <=
+				else if(subCondition1.contains(">") && !subCondition1.contains(">=") && subCondition2.contains("<=")) {
+					String prefix1 = subCondition1.substring(0, subCondition1.indexOf(">")).trim();
+					String prefix2 = subCondition2.substring(0, subCondition2.indexOf("<=")).trim();
+					String suffix1 = subCondition1.substring(subCondition1.indexOf(">")+1).trim();
+					String suffix2 = subCondition2.substring(subCondition2.indexOf("<=")+2).trim();
+					if(prefix1.equals(prefix2) && suffix1.equals(suffix2)) {
+						Replacement r2 = new Replacement(subCondition1, subCondition2, ReplacementType.INVERT_CONDITIONAL);
+						info.addReplacement(r2);
+						invertedConditionals++;
+						break;
+					}
+				}
+				else if(subCondition1.contains("<=") && subCondition2.contains(">") && !subCondition2.contains(">=")) {
+					String prefix1 = subCondition1.substring(0, subCondition1.indexOf("<=")).trim();
+					String prefix2 = subCondition2.substring(0, subCondition2.indexOf(">")).trim();
+					String suffix1 = subCondition1.substring(subCondition1.indexOf("<=")+2).trim();
+					String suffix2 = subCondition2.substring(subCondition2.indexOf(">")+1).trim();
+					if(prefix1.equals(prefix2) && suffix1.equals(suffix2)) {
+						Replacement r2 = new Replacement(subCondition1, subCondition2, ReplacementType.INVERT_CONDITIONAL);
+						info.addReplacement(r2);
+						invertedConditionals++;
+						break;
+					}
+				}
+				// Handle comparison operator inversions: < vs >=
+				else if(subCondition1.contains("<") && !subCondition1.contains("<=") && subCondition2.contains(">=")) {
+					String prefix1 = subCondition1.substring(0, subCondition1.indexOf("<")).trim();
+					String prefix2 = subCondition2.substring(0, subCondition2.indexOf(">=")).trim();
+					String suffix1 = subCondition1.substring(subCondition1.indexOf("<")+1).trim();
+					String suffix2 = subCondition2.substring(subCondition2.indexOf(">=")+2).trim();
+					if(prefix1.equals(prefix2) && suffix1.equals(suffix2)) {
+						Replacement r2 = new Replacement(subCondition1, subCondition2, ReplacementType.INVERT_CONDITIONAL);
+						info.addReplacement(r2);
+						invertedConditionals++;
+						break;
+					}
+				}
+				else if(subCondition1.contains(">=") && subCondition2.contains("<") && !subCondition2.contains("<=")) {
+					String prefix1 = subCondition1.substring(0, subCondition1.indexOf(">=")).trim();
+					String prefix2 = subCondition2.substring(0, subCondition2.indexOf("<")).trim();
+					String suffix1 = subCondition1.substring(subCondition1.indexOf(">=")+2).trim();
+					String suffix2 = subCondition2.substring(subCondition2.indexOf("<")+1).trim();
+					if(prefix1.equals(prefix2) && suffix1.equals(suffix2)) {
+						Replacement r2 = new Replacement(subCondition1, subCondition2, ReplacementType.INVERT_CONDITIONAL);
+						info.addReplacement(r2);
+						invertedConditionals++;
+						break;
+					}
+				}
 				else if(subCondition1.contains(".equals(") && subCondition1.endsWith(")") && subCondition2.contains(".equals(") && subCondition2.endsWith(")")) {
 					//check for invoker-argument swap
 					String arg1 = subCondition1.substring(subCondition1.indexOf(".equals(") + 8, subCondition1.lastIndexOf(")"));
@@ -3815,6 +3874,19 @@ public class StringBasedHeuristics {
 							booleanOperatorReversed = true;
 						}
 						else if(r.getBefore().equals("!=") && r.getAfter().equals("==")) {
+							booleanOperatorReversed = true;
+						}
+						// Comparison operator inversions
+						else if(r.getBefore().equals(">") && r.getAfter().equals("<=")) {
+							booleanOperatorReversed = true;
+						}
+						else if(r.getBefore().equals("<=") && r.getAfter().equals(">")) {
+							booleanOperatorReversed = true;
+						}
+						else if(r.getBefore().equals("<") && r.getAfter().equals(">=")) {
+							booleanOperatorReversed = true;
+						}
+						else if(r.getBefore().equals(">=") && r.getAfter().equals("<")) {
 							booleanOperatorReversed = true;
 						}
 					}

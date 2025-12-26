@@ -11,8 +11,11 @@ public enum Constants {
 			" -> ", "::", " + ", "throw ", "case ", "try", "{", "}", "{", "}", "this", "this.", " if ", " else ", "assertThrows", "assertThatThrownBy", " && ", " || ", "!", "null", "true", "false"),
 
 	CSHARP(";\n", "return ", "return;\n", "return true;\n", "return false;\n", "return null;\n", "return this;\n", "=", "break;\n", "continue;\n",
-			" => ", "::", " + ", "throw ", "case ", "try", "{", "}", "{", "}", "this", "this.", " ? ", " : ", "Assert.Throws", "Assert.That", " && ", " || ", "!", "null", "true", "false");
-	
+			" => ", "::", " + ", "throw ", "case ", "try", "{", "}", "{", "}", "this", "this.", " ? ", " : ", "Assert.Throws", "Assert.That", " && ", " || ", "!", "null", "true", "false"),
+
+	TYPESCRIPT(";\n", "return ", "return;\n", "return true;\n", "return false;\n", "return null;\n", "return this;\n", "=", "break;\n", "continue;\n",
+			" => ", "::", " + ", "throw ", "case ", "try", "{", "}", "[", "]", "this", "this.", " ? ", " : ", "expect", "toThrow", " && ", " || ", "!", "null", "true", "false");
+
 	public final String STATEMENT_TERMINATION;
 	public final String RETURN_SPACE;
 	public final String RETURN_STATEMENT;

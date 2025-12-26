@@ -126,18 +126,19 @@ public class OperationInvocation extends AbstractCall {
 
 	public OperationInvocation(LangCompilationUnit cu, String sourceFolder, String filePath, LangMethodInvocation methodInvocation, VariableDeclarationContainer container, String fileContent) {
 		super(cu, sourceFolder, filePath, methodInvocation, CodeElementType.METHOD_INVOCATION, container);
-		// Use the method name from the invocation (e.g., "Double" from "Double(sum)")
+		// Use the method name from the invocation (e.g., "double" from "this.double(sum)")
 		this.methodName = methodInvocation.getName() != null ? methodInvocation.getName() : "closure";
 		if (methodInvocation.getExpression() instanceof LangSimpleName simpleName) {
-			// For receiver.method() calls where receiver is a simple name
-			this.methodName = simpleName.getIdentifier();
+			// For receiver.method() calls where receiver is a simple name (e.g., this.double(x))
+			// Set the expression to the receiver (e.g., "this"), keep the method name as-is
+			this.expression = simpleName.getIdentifier();
 		} else if (methodInvocation.getExpression() instanceof LangFieldAccess fieldAccess) {
+			// For chained calls like self.property.method()
 			this.methodName = fieldAccess.getName().getIdentifier();
 			this.expression = LangVisitor.stringify(fieldAccess.getExpression()); // "self"
 			if (fieldAccess.getExpression() instanceof LangSimpleName simpleName) {
 				// CORRECT: Set expression to just the object part
 				this.expression = simpleName.getIdentifier(); // "self"
-				// The method name is already set via this.methodName = methodInvocation.extractMethodName()
 			}
 		}
 		// FIX: Handle null arguments list

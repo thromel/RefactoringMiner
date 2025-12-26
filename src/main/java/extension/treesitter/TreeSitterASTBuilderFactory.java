@@ -5,6 +5,7 @@ import extension.ast.node.LangASTNode;
 import extension.base.LangSupportedEnum;
 import extension.treesitter.csharp.CSharpTreeSitterASTBuilder;
 import extension.treesitter.python.PythonTreeSitterASTBuilder;
+import extension.treesitter.typescript.TypeScriptTreeSitterASTBuilder;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -26,8 +27,10 @@ public class TreeSitterASTBuilderFactory {
         // Register C# builder
         BUILDER_FACTORIES.put(LangSupportedEnum.CSHARP, CSharpTreeSitterASTBuilder::new);
 
+        // Register TypeScript builder
+        BUILDER_FACTORIES.put(LangSupportedEnum.TYPESCRIPT, TypeScriptTreeSitterASTBuilder::new);
+
         // Future builders will be registered here:
-        // BUILDER_FACTORIES.put(LangSupportedEnum.TYPESCRIPT, TypeScriptTreeSitterASTBuilder::new);
         // BUILDER_FACTORIES.put(LangSupportedEnum.JAVASCRIPT, JavaScriptTreeSitterASTBuilder::new);
         // BUILDER_FACTORIES.put(LangSupportedEnum.GO, GoTreeSitterASTBuilder::new);
         // BUILDER_FACTORIES.put(LangSupportedEnum.RUST, RustTreeSitterASTBuilder::new);
