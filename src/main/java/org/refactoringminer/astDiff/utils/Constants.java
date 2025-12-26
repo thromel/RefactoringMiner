@@ -37,6 +37,9 @@ public class Constants {
 			ENHANCED_FOR_STATEMENT = "for_statement";
 			PACKAGE_DECLARATION = "";
 			FIELD_DECLARATION = "";
+			MODIFIER = "";
+			INITIALIZER = "";
+			CONSTRUCTOR_INVOCATION = "";
 		}
 		else if(PathFileUtils.isKotlinFile(filePath)) {
 			CLASS_BLOCK = "type_body";
@@ -56,6 +59,9 @@ public class Constants {
 			ENHANCED_FOR_STATEMENT = "for_statement"; // TODO update value
 			PACKAGE_DECLARATION = "package_header";
 			FIELD_DECLARATION = "property_declaration";
+			MODIFIER = "visibility_modifier";
+			INITIALIZER = "anonymous_initializer";
+			CONSTRUCTOR_INVOCATION = "constructor_invocation";
 		}
 		else {
 			// Java values as default
@@ -76,6 +82,9 @@ public class Constants {
 			ENHANCED_FOR_STATEMENT = "EnhancedForStatement";
 			PACKAGE_DECLARATION = "PackageDeclaration";
 			FIELD_DECLARATION = "FieldDeclaration";
+			MODIFIER = "Modifier";
+			INITIALIZER = "Initializer";
+			CONSTRUCTOR_INVOCATION = "ConstructorInvocation";
 		}
 	}
 
@@ -97,7 +106,7 @@ public class Constants {
     public final String SIMPLE_NAME;
     public final String VARIABLE_DECLARATION_STATEMENT = "VariableDeclarationStatement";
     public final String EXPRESSION_STATEMENT;
-    public final String MODIFIER = "Modifier";
+    public final String MODIFIER;
     public final String IMPORT_DECLARATION;
     public final String PRIMITIVE_TYPE = "PrimitiveType";
     public final String TYPE_DECLARATION;
@@ -123,14 +132,20 @@ public class Constants {
     public final String SEALED = "sealed";
     public final String DEFAULT = "default";
     public final String STRICTFP = "strictfp";
+    public final String INLINE = "inline";
+    public final String OVERRIDE = "override";
     public final String EQUAL_OPERATOR = "=";
+    public final String ANNOTATION = "annotation";
+    public final String ENUM = "enum";
+    public final String OPEN = "open";
+    public final String COMPANION = "companion";
 
     public final String METHOD_INVOCATION_ARGUMENTS = "METHOD_INVOCATION_ARGUMENTS";
     public final String METHOD_INVOCATION_RECEIVER = "METHOD_INVOCATION_RECEIVER";
 
     public final String ASSERT_STATEMENT = "AssertStatement";
     public final String BREAK_STATEMENT = "BreakStatement";
-    public final String CONSTRUCTOR_INVOCATION = "ConstructorInvocation";
+    public final String CONSTRUCTOR_INVOCATION;
     public final String CONTINUE_STATEMENT = "ContinueStatement";
     public final String DO_STATEMENT = "DoStatement";
     public final String EMPTY_STATEMENT = "EmptyStatement";
@@ -167,7 +182,7 @@ public class Constants {
     public final String SIMPLE_TYPE = "SimpleType";
     public final String EXPRESSION_METHOD_REFERENCE = "ExpressionMethodReference";
     public final String PREFIX_EXPRESSION = "PrefixExpression";
-    public final String INITIALIZER = "Initializer";
+    public final String INITIALIZER;
     public final String QUALIFIED_NAME = "QualifiedName";
     public final String CLASS_INSTANCE_CREATION = "ClassInstanceCreation";
 
@@ -208,5 +223,17 @@ public class Constants {
     public final String SOURCE_FILE = "source_file"; // This is the root of all trees in Kotlin
     public final String TYPE_IDENTIFIER = "type_identifier";
     public final String FUNCTION_KEYWORD = "function_keyword";
+    public final String CONSTRUCTOR_KEYWORD = "constructor_keyword";
     public final String FUNCTION_PARAMETERS = "function_value_parameters";
+    public final String STATEMENTS = "statements"; // This is a node that wraps each leaf statement in Kotlin
+    public final String IMPORT_LIST = "import_list";
+    public final String MODIFIERS = "modifiers"; // This is a node that wraps all modifiers
+    public final String TYPE_PARAMETERS = "type_parameters";
+    public final String INIT_KEYWORD = "initializer_keyword";
+    public final String SECONDARY_CONSTRUCTOR = "secondary_constructor";
+    public final String PRIMARY_CONSTRUCTOR = "primary_constructor";
+    public final String DELEGATION_SPECIFIER = "delegation_specifier";
+    public final String AFFECTATION_OPERATOR = "affectation_operator";
+    public final String COMPANION_OBJECT = "companion_object";
+    public final String OBJECT_DECLARATION = "object_declaration";
 }

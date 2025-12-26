@@ -99,6 +99,7 @@ public abstract class UMLClassBaseDiff extends UMLAbstractClassDiff implements C
 	private Optional<Pair<UMLType, UMLType>> superclassBecomesImplementedInterface;
 	private Optional<UMLJavadocDiff> javadocDiff;
 	private Optional<UMLJavadocDiff> packageDeclarationJavadocDiff;
+	private Optional<UMLParameterListDiff> primaryConstructorParameterListDiff;
 	private UMLCommentListDiff packageDeclarationCommentListDiff;
 	private Set<UMLOperationBodyMapper> extractMethodCandidates;
 
@@ -127,6 +128,13 @@ public abstract class UMLClassBaseDiff extends UMLAbstractClassDiff implements C
 		else {
 			this.packageDeclarationJavadocDiff = Optional.empty();
 		}
+		if(originalClass.getPrimaryConstructor().isPresent() && nextClass.getPrimaryConstructor().isPresent()) {
+			this.primaryConstructorParameterListDiff = Optional.of(
+					new UMLParameterListDiff(originalClass.getPrimaryConstructor().get(), nextClass.getPrimaryConstructor().get(), Collections.emptySet(), Collections.emptySet(), this));
+		}
+		else {
+			this.primaryConstructorParameterListDiff = Optional.empty();
+		}
 		processImports();
 	}
 
@@ -144,6 +152,10 @@ public abstract class UMLClassBaseDiff extends UMLAbstractClassDiff implements C
 
 	public Optional<UMLJavadocDiff> getPackageDeclarationJavadocDiff() {
 		return packageDeclarationJavadocDiff;
+	}
+
+	public Optional<UMLParameterListDiff> getPrimaryConstructorParameterListDiff() {
+		return primaryConstructorParameterListDiff;
 	}
 
 	public UMLCommentListDiff getPackageDeclarationCommentListDiff() {

@@ -44,12 +44,14 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Var
 	private boolean isSynchronized;
 	private boolean isDefault;
 	private boolean isStrictfp;
+	private boolean isInline;
 	private Optional<UMLAnonymousClass> anonymousClassContainer;
 	private OperationBody operationBody;
 	private AbstractExpression defaultExpression;
 	private List<UMLAnonymousClass> anonymousClassList;
 	private List<UMLTypeParameter> typeParameters;
 	private List<UMLType> thrownExceptionTypes;
+	private UMLType receiverTypeReference;
 	private UMLJavadoc javadoc;
 	private List<UMLAnnotation> annotations;
 	private List<UMLModifier> modifiers;
@@ -237,6 +239,14 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Var
 		this.isStrictfp = isStrictfp;
 	}
 
+	public boolean isInline() {
+		return isInline;
+	}
+
+	public void setInline(boolean isInline) {
+		this.isInline = isInline;
+	}
+
 	public boolean isDeclaredInAnonymousClass() {
 		return anonymousClassContainer != null && anonymousClassContainer.isPresent();
 	}
@@ -346,6 +356,14 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Var
 			}
 		}
 		return false;
+	}
+
+	public UMLType getReceiverTypeReference() {
+		return receiverTypeReference;
+	}
+
+	public void setReceiverTypeReference(UMLType receiverTypeReference) {
+		this.receiverTypeReference = receiverTypeReference;
 	}
 
 	public UMLJavadoc getJavadoc() {

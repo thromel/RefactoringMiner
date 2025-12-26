@@ -73,7 +73,7 @@ public class BodyMapperMatcher extends OptimizationAwareMatcher {
         Tree dstStatementNode = TreeUtilFunctions.findByLocationInfo(dstTree,compositeStatementObjectMapping.getFragment2().getLocationInfo());
         //handle case where the parent block has only a single statement and the locationInfo of compositeStatement is identical with the parent block locationInfo in Python
         //the solution uses reflection to obtain the value of Constants value from the CodeElementType constant name
-        if (srcStatementNode.getType().name.equals(Constants.get().CLASS_BLOCK) && !compositeStatementObjectMapping.getFragment1().getLocationInfo().getCodeElementType().equals(CodeElementType.BLOCK)) {
+        if (srcStatementNode != null && srcStatementNode.getType().name.equals(Constants.get().CLASS_BLOCK) && !compositeStatementObjectMapping.getFragment1().getLocationInfo().getCodeElementType().equals(CodeElementType.BLOCK)) {
             String astTypeName = compositeStatementObjectMapping.getFragment1().getLocationInfo().getCodeElementType().name();
             try {
                 java.lang.reflect.Field publicField = Constants.class.getField(astTypeName);
@@ -85,7 +85,7 @@ public class BodyMapperMatcher extends OptimizationAwareMatcher {
                 //e.printStackTrace();
             }
         }
-        if (dstStatementNode.getType().name.equals(Constants.get().CLASS_BLOCK) && !compositeStatementObjectMapping.getFragment2().getLocationInfo().getCodeElementType().equals(CodeElementType.BLOCK)) {
+        if (dstStatementNode != null && dstStatementNode.getType().name.equals(Constants.get().CLASS_BLOCK) && !compositeStatementObjectMapping.getFragment2().getLocationInfo().getCodeElementType().equals(CodeElementType.BLOCK)) {
             String astTypeName = compositeStatementObjectMapping.getFragment2().getLocationInfo().getCodeElementType().name();
             try {
                 java.lang.reflect.Field publicField = Constants.class.getField(astTypeName);
@@ -186,7 +186,13 @@ public class BodyMapperMatcher extends OptimizationAwareMatcher {
     private void processLeafMapping(Tree srcTree, Tree dstTree, AbstractCodeMapping abstractCodeMapping, ExtendedMultiMappingStore mappingStore, boolean isPartOfExtractedMethod) {
         LeafMapping leafMapping = (LeafMapping) abstractCodeMapping;
         Tree srcStatementNode = TreeUtilFunctions.findByLocationInfo(srcTree,leafMapping.getFragment1().getLocationInfo());
+        if(srcStatementNode.getType().name.equals(Constants.get().STATEMENTS)) {
+            srcStatementNode = srcStatementNode.getChild(0);
+        }
         Tree dstStatementNode = TreeUtilFunctions.findByLocationInfo(dstTree,leafMapping.getFragment2().getLocationInfo());
+        if(dstStatementNode.getType().name.equals(Constants.get().STATEMENTS)) {
+            dstStatementNode = dstStatementNode.getChild(0);
+        }
         if (srcStatementNode == null || dstStatementNode == null) {
             System.err.println("Tree not found for " + abstractCodeMapping);
             return;
@@ -197,6 +203,9 @@ public class BodyMapperMatcher extends OptimizationAwareMatcher {
             else
                 mappingStore.addMapping(srcStatementNode, dstStatementNode);
 
+        if(srcStatementNode.getParent().getType().name.equals(Constants.get().STATEMENTS) && dstStatementNode.getParent().getType().name.equals(Constants.get().STATEMENTS)) {
+            mappingStore.addMapping(srcStatementNode.getParent(), dstStatementNode.getParent());
+        }
         boolean _abstractExp = abstractCodeMapping.getFragment1() instanceof AbstractExpression || abstractCodeMapping.getFragment2() instanceof AbstractExpression;
         boolean _leafExp = abstractCodeMapping.getFragment1() instanceof LeafExpression || abstractCodeMapping.getFragment2() instanceof LeafExpression;
         boolean _abstractExpWithNonCompositeOwner = _abstractExp;
