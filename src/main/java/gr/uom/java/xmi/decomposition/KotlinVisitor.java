@@ -27,6 +27,8 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression;
 import org.jetbrains.kotlin.psi.KtReturnExpression;
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression;
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression;
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry;
+import org.jetbrains.kotlin.psi.KtSuperTypeEntry;
 import org.jetbrains.kotlin.psi.KtThisExpression;
 import org.jetbrains.kotlin.psi.KtValueArgument;
 import org.jetbrains.kotlin.psi.KtVisitor;
@@ -34,6 +36,7 @@ import static org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes.*;
 
 import gr.uom.java.xmi.VariableDeclarationContainer;
 import gr.uom.java.xmi.LocationInfo.CodeElementType;
+import gr.uom.java.xmi.UMLType;
 
 public class KotlinVisitor extends KtVisitor<Object, Object> {
 	private KtFile cu;
@@ -116,6 +119,18 @@ public class KotlinVisitor extends KtVisitor<Object, Object> {
 			this.processPropertyExpression(property, data);
 		}
 		return super.visitExpression(expression, data);
+	}
+
+	public Object visitSuperTypeCallEntry(KtSuperTypeCallEntry entry, Object data) {
+		ObjectCreation invocation = new ObjectCreation(cu, sourceFolder, filePath, entry, container, fileContent);
+		creations.add(invocation);
+		return super.visitSuperTypeCallEntry(entry, data);
+	}
+
+	public Object visitSuperTypeEntry(KtSuperTypeEntry entry, Object data) {
+		UMLType type = UMLType.extractTypeObject(cu, sourceFolder, filePath, fileContent, entry.getTypeReference(), 0);
+		types.add(type.toString());
+		return super.visitSuperTypeEntry(entry, data);
 	}
 
 	private void processPropertyExpression(KtProperty ktProperty, Object data) {

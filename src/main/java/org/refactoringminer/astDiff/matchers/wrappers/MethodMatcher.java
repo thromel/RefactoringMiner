@@ -56,14 +56,20 @@ public class MethodMatcher extends BodyMapperMatcher{
             if (dstOperationNode.getType().name.equals(Constants.get().CLASS_BLOCK)) {
                 dstOperationNode = TreeUtilFunctions.findByLocationInfo(dstTree, umlOperationBodyMapper.getOperation2().getLocationInfo(), Constants.get().METHOD_DECLARATION);
             }
+            if (srcOperationNode.getType().name.endsWith("_comment")) {
+                srcOperationNode = TreeUtilFunctions.findByLocationInfo(srcTree, umlOperationBodyMapper.getOperation1().getLocationInfo(), Constants.get().METHOD_DECLARATION);
+            }
+            if (dstOperationNode.getType().name.endsWith("_comment")) {
+                dstOperationNode = TreeUtilFunctions.findByLocationInfo(dstTree, umlOperationBodyMapper.getOperation2().getLocationInfo(), Constants.get().METHOD_DECLARATION);
+            }
             if (srcOperationNode != null && srcOperationNode.getParent() != null && srcOperationNode.getParent().getType().name.equals(Constants.get().DECORATED_METHOD)) {
                 srcOperationNode = srcOperationNode.getParent();
             }
             if (dstOperationNode != null && dstOperationNode.getParent() != null && dstOperationNode.getParent().getType().name.equals(Constants.get().DECORATED_METHOD)) {
                 dstOperationNode = dstOperationNode.getParent();
             }
-            if (srcOperationNode == null || !(srcOperationNode.getType().name.equals(Constants.get().METHOD_DECLARATION) || srcOperationNode.getType().name.equals(Constants.get().DECORATED_METHOD) || srcOperationNode.getType().name.equals(Constants.get().ANNOTATION_TYPE_MEMBER_DECLARATION))) return;
-            if (dstOperationNode == null || !(dstOperationNode.getType().name.equals(Constants.get().METHOD_DECLARATION) || dstOperationNode.getType().name.equals(Constants.get().DECORATED_METHOD) || dstOperationNode.getType().name.equals(Constants.get().ANNOTATION_TYPE_MEMBER_DECLARATION))) return;
+            if (srcOperationNode == null || !(srcOperationNode.getType().name.equals(Constants.get().METHOD_DECLARATION) || srcOperationNode.getType().name.equals(Constants.get().SECONDARY_CONSTRUCTOR) || srcOperationNode.getType().name.equals(Constants.get().DECORATED_METHOD) || srcOperationNode.getType().name.equals(Constants.get().ANNOTATION_TYPE_MEMBER_DECLARATION))) return;
+            if (dstOperationNode == null || !(dstOperationNode.getType().name.equals(Constants.get().METHOD_DECLARATION) || dstOperationNode.getType().name.equals(Constants.get().SECONDARY_CONSTRUCTOR) || dstOperationNode.getType().name.equals(Constants.get().DECORATED_METHOD) || dstOperationNode.getType().name.equals(Constants.get().ANNOTATION_TYPE_MEMBER_DECLARATION))) return;
             new JavaDocMatcher(optimizationData, umlOperationBodyMapper.getOperation1().getJavadoc(), umlOperationBodyMapper.getOperation2().getJavadoc(), umlOperationBodyMapper.getJavadocDiff())
                     .match(srcOperationNode, dstOperationNode, mappingStore);
             mappingStore.addMapping(srcOperationNode, dstOperationNode);
@@ -83,18 +89,23 @@ public class MethodMatcher extends BodyMapperMatcher{
                     mappingStore.addMapping(srcOperationNode, dstOperationNode);
                     //static keyword
                     if (umlOperationBodyMapper.getContainer1() instanceof UMLInitializer && umlOperationBodyMapper.getContainer2() instanceof UMLInitializer) {
-                    	UMLInitializer initializer1 = (UMLInitializer)umlOperationBodyMapper.getContainer1();
+                        UMLInitializer initializer1 = (UMLInitializer)umlOperationBodyMapper.getContainer1();
                         UMLInitializer initializer2 = (UMLInitializer)umlOperationBodyMapper.getContainer2();
-                    	if (initializer1.isStatic() && initializer2.isStatic()) {
+                        Tree srcInitKeyword = TreeUtilFunctions.findChildByType(srcOperationNode, Constants.get().INIT_KEYWORD);
+                        Tree dstInitKeyword = TreeUtilFunctions.findChildByType(dstOperationNode, Constants.get().INIT_KEYWORD);
+                        if (srcInitKeyword != null && dstInitKeyword != null) {
+                            mappingStore.addMapping(srcInitKeyword, dstInitKeyword);
+                        }
+                        if (initializer1.isStatic() && initializer2.isStatic()) {
                             Tree srcModifier = TreeUtilFunctions.findChildByType(srcOperationNode, Constants.get().MODIFIER);
                             Tree dstModifier = TreeUtilFunctions.findChildByType(dstOperationNode, Constants.get().MODIFIER);
                             if (srcModifier != null && dstModifier != null)
                                 mappingStore.addMapping(srcModifier, dstModifier);
                         }
                         if (initializer1.getJavadoc() != null && initializer2.getJavadoc() != null) {
-                        	//Javadoc
-                        	new JavaDocMatcher(optimizationData, initializer1.getJavadoc(), initializer2.getJavadoc(), umlOperationBodyMapper.getJavadocDiff())
-                        			.match(srcOperationNode, dstOperationNode, mappingStore);
+                            //Javadoc
+                            new JavaDocMatcher(optimizationData, initializer1.getJavadoc(), initializer2.getJavadoc(), umlOperationBodyMapper.getJavadocDiff())
+                                    .match(srcOperationNode, dstOperationNode, mappingStore);
                         }
                     }
                 }
@@ -102,6 +113,14 @@ public class MethodMatcher extends BodyMapperMatcher{
         }
         if (srcOperationNode != null && dstOperationNode != null) {
             processMethodSignature(srcOperationNode, dstOperationNode, umlOperationBodyMapper, mappingStore);
+            if(umlOperationBodyMapper.getOperation1() != null && umlOperationBodyMapper.getOperation1().getDefaultExpression() != null &&
+                    umlOperationBodyMapper.getOperation2() != null && umlOperationBodyMapper.getOperation2().getDefaultExpression() != null) {
+                Tree srcOperationFunctionBody = srcOperationNode.getChild(srcOperationNode.getChildren().size()-1);
+                Tree dstOperationFunctionBody = dstOperationNode.getChild(dstOperationNode.getChildren().size()-1);
+                Tree srcAffectationKeyword = TreeUtilFunctions.findChildByType(srcOperationFunctionBody, Constants.get().AFFECTATION_OPERATOR);
+                Tree dstAffectationKeyword = TreeUtilFunctions.findChildByType(dstOperationFunctionBody, Constants.get().AFFECTATION_OPERATOR);
+                mappingStore.addMapping(srcAffectationKeyword, dstAffectationKeyword);
+            }
             new BodyMapperMatcher(optimizationData, umlOperationBodyMapper, isPartOfExtractedMethod).match(srcOperationNode, dstOperationNode, mappingStore);
             processOperationDiff(srcOperationNode, dstOperationNode, umlOperationBodyMapper, mappingStore);
             processMethodParameters(srcOperationNode, dstOperationNode, umlOperationBodyMapper.getMatchedVariables(), mappingStore);
@@ -121,7 +140,9 @@ public class MethodMatcher extends BodyMapperMatcher{
         searchingTypes.add(Constants.get().BLOCK);
         searchingTypes.add(Constants.get().FUNCTION_BODY);
         searchingTypes.add(Constants.get().FUNCTION_KEYWORD);
+        searchingTypes.add(Constants.get().CONSTRUCTOR_KEYWORD);
         searchingTypes.add(Constants.get().FUNCTION_PARAMETERS);
+        searchingTypes.add(Constants.get().MODIFIERS);
         for (String type : searchingTypes) {
             com.github.gumtreediff.utils.Pair<Tree,Tree> matched = Helpers.findPairOfType(srcOperationNode,dstOperationNode,type);
             if (matched != null)
@@ -142,12 +163,16 @@ public class MethodMatcher extends BodyMapperMatcher{
                 new SameModifierMatcher(Constants.get().DEFAULT).match(srcOperationNode,dstOperationNode,mappingStore);
             if (umlOperationBodyMapper.getOperation1().isStrictfp() && umlOperationBodyMapper.getOperation2().isStrictfp())
                 new SameModifierMatcher(Constants.get().STRICTFP).match(srcOperationNode,dstOperationNode,mappingStore);
+            if (umlOperationBodyMapper.getOperation1().isInline() && umlOperationBodyMapper.getOperation2().isInline())
+                new SameModifierMatcher(Constants.get().INLINE).match(srcOperationNode,dstOperationNode,mappingStore);
+            new SameModifierMatcher(Constants.get().OVERRIDE).match(srcOperationNode,dstOperationNode,mappingStore);
             String v1 = umlOperationBodyMapper.getOperation1().getVisibility().toString();
             String v2 = umlOperationBodyMapper.getOperation2().getVisibility().toString();
             Tree tree1 = TreeUtilFunctions.findChildByTypeAndLabel(srcOperationNode, Constants.get().MODIFIER, v1);
             Tree tree2 = TreeUtilFunctions.findChildByTypeAndLabel(dstOperationNode, Constants.get().MODIFIER, v2);
-            if (tree1 != null && tree2 != null)
+            if (tree1 != null && tree2 != null) {
                 mappingStore.addMappingRecursively(tree1,tree2);
+            }
         }
     }
 
@@ -159,6 +184,9 @@ public class MethodMatcher extends BodyMapperMatcher{
             Tree srcTypeParam = TreeUtilFunctions.findByLocationInfo(srcTree, commonTypeParamSet.getLeft().getLocationInfo());
             Tree dstTypeParam = TreeUtilFunctions.findByLocationInfo(dstTree, commonTypeParamSet.getRight().getLocationInfo());
             mappingStore.addMappingRecursively(srcTypeParam,dstTypeParam);
+            if (srcTypeParam.getParent().getType().name.equals(Constants.get().TYPE_PARAMETERS) && dstTypeParam.getParent().getType().name.equals(Constants.get().TYPE_PARAMETERS)) {
+                mappingStore.addMapping(srcTypeParam.getParent(), dstTypeParam.getParent());
+            }
         }
         for (org.apache.commons.lang3.tuple.Pair<UMLAnnotation, UMLAnnotation>  umlAnnotationUMLAnnotationPair : umlOperationDiff.getAnnotationListDiff().getCommonAnnotations()) {
             Tree srcClassAnnotationTree = TreeUtilFunctions.findByLocationInfo(srcTree , umlAnnotationUMLAnnotationPair.getLeft().getLocationInfo());
@@ -191,11 +219,24 @@ public class MethodMatcher extends BodyMapperMatcher{
             }
         }
         VariableDeclarationContainer removedOperation = umlOperationDiff.getRemovedOperation();
-		VariableDeclarationContainer addedOperation = umlOperationDiff.getAddedOperation();
-		if (removedOperation instanceof UMLOperation && ((UMLOperation)removedOperation).getReturnParameter() != null &&
-				addedOperation instanceof UMLOperation && ((UMLOperation)addedOperation).getReturnParameter() != null ) {
+        VariableDeclarationContainer addedOperation = umlOperationDiff.getAddedOperation();
+        if (removedOperation instanceof UMLOperation && ((UMLOperation)removedOperation).getReturnParameter() != null &&
+                addedOperation instanceof UMLOperation && ((UMLOperation)addedOperation).getReturnParameter() != null ) {
             LocationInfo srcLocationInfo = ((UMLOperation)removedOperation).getReturnParameter().getType().getLocationInfo();
             LocationInfo dstLocationInfo = ((UMLOperation)addedOperation).getReturnParameter().getType().getLocationInfo();
+            Tree srcNode =TreeUtilFunctions.findByLocationInfo(srcTree, srcLocationInfo);
+            Tree dstNode =TreeUtilFunctions.findByLocationInfo(dstTree, dstLocationInfo);
+            if (srcNode == null || dstNode == null) return;
+            if (srcNode.isIsoStructuralTo(dstNode))
+                mappingStore.addMappingRecursively(srcNode,dstNode);
+            else {
+                new LeafMatcher().match(srcNode,dstNode,mappingStore);
+            }
+        }
+        if (removedOperation instanceof UMLOperation leftOperation && addedOperation instanceof UMLOperation rightOperation &&
+                leftOperation.getReceiverTypeReference() != null && rightOperation.getReceiverTypeReference() != null) {
+            LocationInfo srcLocationInfo = leftOperation.getReceiverTypeReference().getLocationInfo();
+            LocationInfo dstLocationInfo = rightOperation.getReceiverTypeReference().getLocationInfo();
             Tree srcNode =TreeUtilFunctions.findByLocationInfo(srcTree, srcLocationInfo);
             Tree dstNode =TreeUtilFunctions.findByLocationInfo(dstTree, dstLocationInfo);
             if (srcNode == null || dstNode == null) return;
