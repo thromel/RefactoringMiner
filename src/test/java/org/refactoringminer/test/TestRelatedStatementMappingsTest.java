@@ -454,6 +454,116 @@ public class TestRelatedStatementMappingsTest {
         Assertions.assertDoesNotThrow(() -> new MethodSourceAnnotation(umlAnnotation, umlOperation, umlClass));
     }
 
+    @Test
+    public void testMethodSourceResolvesConstantBackedReference() {
+        Map<String, String> files = Map.of(
+                "src/test/java/com/test/TestClass.java", """
+                        package com.test;
+                        import org.junit.jupiter.params.ParameterizedTest;
+                        import org.junit.jupiter.params.provider.Arguments;
+                        import org.junit.jupiter.params.provider.MethodSource;
+                        import java.util.stream.Stream;
+                        class TestClass {
+                            static final String DATE_PARSER_PARAMETERS = "dateParserParameters";
+                            static Stream<Arguments> dateParserParameters() {
+                                return Stream.of(Arguments.of("value"), Arguments.of("value2"));
+                            }
+                            @ParameterizedTest
+                            @MethodSource(DATE_PARSER_PARAMETERS)
+                            void testValue(String parameter) {
+                                org.junit.jupiter.api.Assertions.assertTrue(parameter.length() >= 0);
+                            }
+                        }
+                        """);
+        MethodSourceAnnotation sourceAnnotation = buildMethodSourceAnnotation(files, "com.test.TestClass", "testValue");
+        Assertions.assertEquals(List.of("dateParserParameters"), sourceAnnotation.getValue());
+        Assertions.assertEquals(List.of(List.of("value"), List.of("value2")), sanitizeTestParameters(sourceAnnotation.getTestParameters()));
+    }
+
+    @Test
+    public void testMethodSourceResolvesQualifiedReference() {
+        Map<String, String> files = Map.of(
+                "src/test/java/com/test/TestClass.java", """
+                        package com.test;
+                        import org.junit.jupiter.params.ParameterizedTest;
+                        import org.junit.jupiter.params.provider.MethodSource;
+                        class TestClass {
+                            static final String DATE_PARSER_PARAMETERS = "com.test.Provider#dateParserParameters()";
+                            @ParameterizedTest
+                            @MethodSource(DATE_PARSER_PARAMETERS)
+                            void testValue(String parameter) {
+                                org.junit.jupiter.api.Assertions.assertTrue(parameter.length() >= 0);
+                            }
+                        }
+                        """,
+                "src/test/java/com/test/Provider.java", """
+                        package com.test;
+                        import org.junit.jupiter.params.provider.Arguments;
+                        import java.util.stream.Stream;
+                        class Provider {
+                            static Stream<Arguments> dateParserParameters() {
+                                return Stream.of(Arguments.of("value"), Arguments.of("value2"));
+                            }
+                        }
+                        """);
+        MethodSourceAnnotation sourceAnnotation = buildMethodSourceAnnotation(files, "com.test.TestClass", "testValue");
+        Assertions.assertEquals(List.of("com.test.Provider#dateParserParameters()"), sourceAnnotation.getValue());
+        Assertions.assertEquals(List.of(List.of("value"), List.of("value2")), sanitizeTestParameters(sourceAnnotation.getTestParameters()));
+    }
+
+    @Test
+    public void testMethodSourceResolvesMultipleFactoryNames() {
+        Map<String, String> files = Map.of(
+                "src/test/java/com/test/TestClass.java", """
+                        package com.test;
+                        import org.junit.jupiter.params.ParameterizedTest;
+                        import org.junit.jupiter.params.provider.Arguments;
+                        import org.junit.jupiter.params.provider.MethodSource;
+                        import java.util.stream.Stream;
+                        class TestClass {
+                            static Stream<Arguments> first() {
+                                return Stream.of(Arguments.of("value"));
+                            }
+                            static Stream<Arguments> second() {
+                                return Stream.of(Arguments.of("value2"));
+                            }
+                            @ParameterizedTest
+                            @MethodSource({"first", "second"})
+                            void testValue(String parameter) {
+                                org.junit.jupiter.api.Assertions.assertTrue(parameter.length() >= 0);
+                            }
+                        }
+                        """);
+        MethodSourceAnnotation sourceAnnotation = buildMethodSourceAnnotation(files, "com.test.TestClass", "testValue");
+        Assertions.assertEquals(List.of("first", "second"), sourceAnnotation.getValue());
+        Assertions.assertEquals(List.of(List.of("value"), List.of("value2")), sanitizeTestParameters(sourceAnnotation.getTestParameters()));
+    }
+
+    private MethodSourceAnnotation buildMethodSourceAnnotation(Map<String, String> files, String className, String operationName) {
+        UMLModelASTReader reader = new UMLModelASTReader(files, Set.of("."), true);
+        UMLClass umlClass = reader.getUmlModel().getClassList().stream()
+                .filter(c -> c.getName().equals(className))
+                .findFirst()
+                .orElseThrow();
+        UMLOperation umlOperation = umlClass.getOperations().stream()
+                .filter(op -> op.getName().equals(operationName))
+                .findFirst()
+                .orElseThrow();
+        UMLAnnotation umlAnnotation = umlOperation.getAnnotations().stream()
+                .filter(annotation -> annotation.getTypeName().equals("MethodSource"))
+                .findFirst()
+                .orElseThrow();
+        return new MethodSourceAnnotation(umlAnnotation, umlOperation, umlClass, reader.getUmlModel());
+    }
+
+    private List<List<String>> sanitizeTestParameters(List<List<String>> testParameters) {
+        return testParameters.stream()
+                .map(row -> row.stream()
+                        .map(UMLClassBaseDiff::sanitizeStringLiteral)
+                        .collect(Collectors.toList()))
+                .collect(Collectors.toList());
+    }
+
 
 
     @ParameterizedTest

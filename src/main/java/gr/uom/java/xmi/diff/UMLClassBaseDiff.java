@@ -50,6 +50,7 @@ import gr.uom.java.xmi.UMLParameter;
 import gr.uom.java.xmi.UMLType;
 import gr.uom.java.xmi.VariableDeclarationContainer;
 import gr.uom.java.xmi.Visibility;
+import gr.uom.java.xmi.annotation.source.MethodSourceAnnotation;
 import gr.uom.java.xmi.decomposition.AbstractCall;
 import gr.uom.java.xmi.decomposition.AbstractCodeFragment;
 import gr.uom.java.xmi.decomposition.AbstractCodeMapping;
@@ -2398,6 +2399,11 @@ public abstract class UMLClassBaseDiff extends UMLAbstractClassDiff implements C
 
 	private SourceAnnotation generateSourceAnnotation(UMLAnnotation annotation, UMLOperation addedOperation) {
 		UMLAbstractClass inputDeclaration = nextClass;
+		UMLModel sourceModel = modelDiff != null ? modelDiff.getChildModel() : null;
+		if (originalClass != null && addedOperation.getClassName().equals(originalClass.getName())) {
+			inputDeclaration = originalClass;
+			sourceModel = modelDiff != null ? modelDiff.getParentModel() : null;
+		}
 		if(annotation.getTypeName().equals("EnumSource") && modelDiff != null) {
 			String enumClassLiteral = null;
 			if (annotation.isMarkerAnnotation()) {
@@ -2409,11 +2415,14 @@ public abstract class UMLClassBaseDiff extends UMLAbstractClassDiff implements C
 					enumClassLiteral = SourceAnnotation.sanitizeLiteral(typeLiterals.get(0).getString());
 			}
 			if(enumClassLiteral != null) {
-				UMLClass enumClassDeclaration = findEnumDeclaration(modelDiff.getChildModel(), enumClassLiteral);
+				UMLClass enumClassDeclaration = findEnumDeclaration(sourceModel, enumClassLiteral);
 				if(enumClassDeclaration != null) {
 					inputDeclaration = enumClassDeclaration;
 				}
 			}
+		}
+		if(annotation.getTypeName().equals("MethodSource")) {
+			return new MethodSourceAnnotation(annotation, addedOperation, inputDeclaration, sourceModel);
 		}
 		SourceAnnotation sourceAnnotation = SourceAnnotation.create(annotation, addedOperation, inputDeclaration);
 		return sourceAnnotation;

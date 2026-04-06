@@ -257,6 +257,85 @@ class TestParameterizeTestRefactoring {
         assertEquals(0, refactoringsFound.size(), "Not all found refactoring instances were expected:" + refactoringsFound.stream().map(Object::toString).collect(Collectors.joining(",")));
     }
 
+    @Test
+    void testParameterizeTestWithConstantBackedMethodSourceDoesNotCrash() throws RefactoringMinerTimedOutException {
+        Map<String, String> filesBefore = Map.of(
+                "src/test/java/com/test/TestClass.java", new TestSrcCodeBuilder()
+                        .testPackage("com.test")
+                        .importStatement("static org.junit.jupiter.api.Assertions.assertTrue")
+                        .testMethod("testValue")
+                            .statement("assertTrue(\"value\".length() >= 0);")
+                        .testMethod("testValue2")
+                            .statement("assertTrue(\"value2\".length() >= 0);")
+                        .build());
+        Map<String, String> filesAfter = Map.of(
+                "src/test/java/com/test/TestClass.java", new TestSrcCodeBuilder()
+                        .testPackage("com.test")
+                        .importStatement("org.junit.jupiter.params.ParameterizedTest")
+                        .importStatement("org.junit.jupiter.params.provider.Arguments")
+                        .importStatement("org.junit.jupiter.params.provider.MethodSource")
+                        .importStatement("java.util.stream.Stream")
+                        .importStatement("static org.junit.jupiter.api.Assertions.assertTrue")
+                        .parameterize()
+                        .prefix(() -> """
+                                static final String DATE_PARSER_PARAMETERS = "dateParserParameters";
+                                static Stream<Arguments> dateParserParameters() {
+                                    return Stream.of(Arguments.of("value"), Arguments.of("value2"));
+                                }
+                                """)
+                        .testMethod("testValue")
+                            .annotate("@MethodSource(DATE_PARSER_PARAMETERS)")
+                            .parameter("String parameter")
+                            .statement("assertTrue(parameter.length() >= 0);")
+                        .build());
+        assertParameterizeTestDiffDoesNotThrow(filesBefore, filesAfter);
+    }
+
+    @Test
+    void testParameterizeTestWithQualifiedMethodSourceDoesNotCrash() throws RefactoringMinerTimedOutException {
+        Map<String, String> filesBefore = Map.of(
+                "src/test/java/com/test/TestClass.java", new TestSrcCodeBuilder()
+                        .testPackage("com.test")
+                        .importStatement("static org.junit.jupiter.api.Assertions.assertTrue")
+                        .testMethod("testValue")
+                            .statement("assertTrue(\"value\".length() >= 0);")
+                        .testMethod("testValue2")
+                            .statement("assertTrue(\"value2\".length() >= 0);")
+                        .build());
+        Map<String, String> filesAfter = Map.of(
+                "src/test/java/com/test/TestClass.java", new TestSrcCodeBuilder()
+                        .testPackage("com.test")
+                        .importStatement("org.junit.jupiter.params.ParameterizedTest")
+                        .importStatement("org.junit.jupiter.params.provider.MethodSource")
+                        .importStatement("static org.junit.jupiter.api.Assertions.assertTrue")
+                        .parameterize()
+                        .prefix(() -> """
+                                static final String DATE_PARSER_PARAMETERS = "com.test.Provider#dateParserParameters()";
+                                """)
+                        .testMethod("testValue")
+                            .annotate("@MethodSource(DATE_PARSER_PARAMETERS)")
+                            .parameter("String parameter")
+                            .statement("assertTrue(parameter.length() >= 0);")
+                        .build(),
+                "src/test/java/com/test/Provider.java", """
+                        package com.test;
+                        import org.junit.jupiter.params.provider.Arguments;
+                        import java.util.stream.Stream;
+                        class Provider {
+                            static Stream<Arguments> dateParserParameters() {
+                                return Stream.of(Arguments.of("value"), Arguments.of("value2"));
+                            }
+                        }
+                        """);
+        assertParameterizeTestDiffDoesNotThrow(filesBefore, filesAfter);
+    }
+
+    private void assertParameterizeTestDiffDoesNotThrow(Map<String, String> filesBefore, Map<String, String> filesAfter) throws RefactoringMinerTimedOutException {
+        UMLModel cuBefore = new UMLModelASTReader(filesBefore, Set.of("."), true).getUmlModel();
+        UMLModel cuAfter = new UMLModelASTReader(filesAfter, Set.of("."), true).getUmlModel();
+        assertDoesNotThrow(() -> cuBefore.diff(cuAfter));
+    }
+
     private static List<RefactoringType> matchRefactorings(List<RefactoringType> expectedRefactorings, List<RefactoringType> refactoringsFound) {
         List<RefactoringType> matchedRefactorings = new ArrayList<>();
         for (Iterator<RefactoringType> i = expectedRefactorings.iterator(); i.hasNext(); ) {
