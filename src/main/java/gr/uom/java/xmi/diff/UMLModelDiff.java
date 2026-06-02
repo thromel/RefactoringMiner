@@ -6516,12 +6516,15 @@ public class UMLModelDiff {
 			UMLType type = variableDeclaration.getType();
 			boolean superclassRelationship = superclassRelationship(addedOperation, type);
 			String addedOperationClassName = addedOperation.getNonQualifiedClassName();
-			String addedOperationFullQualifiedClassName = addedOperation.getClassName().substring(0, addedOperation.getClassName().lastIndexOf(addedOperationClassName)-1);
 			String outerClassName = null;
-			if(addedOperationFullQualifiedClassName.contains(".")) {
-				String name = addedOperationFullQualifiedClassName.substring(addedOperationFullQualifiedClassName.lastIndexOf(".")+1, addedOperationFullQualifiedClassName.length());
-				if(name.length() > 0 && Character.isUpperCase(name.charAt(0))) {
-					outerClassName = name;
+			int classNameIndex = addedOperation.getClassName().lastIndexOf(addedOperationClassName);
+			if(classNameIndex > 0) {
+				String addedOperationFullQualifiedClassName = addedOperation.getClassName().substring(0, classNameIndex-1);
+				if(addedOperationFullQualifiedClassName.contains(".")) {
+					String name = addedOperationFullQualifiedClassName.substring(addedOperationFullQualifiedClassName.lastIndexOf(".")+1, addedOperationFullQualifiedClassName.length());
+					if(name.length() > 0 && Character.isUpperCase(name.charAt(0))) {
+						outerClassName = name;
+					}
 				}
 			}
 			if(type != null && !(type instanceof InferredType) && !addedOperationClassName.equals(type.getClassType()) && !type.getClassType().equals(outerClassName) && !superclassRelationship) {
